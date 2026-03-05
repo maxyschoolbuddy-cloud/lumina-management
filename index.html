@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LUMINA — ລະບົບຈັດການ</title>
+<title>VANGJUT STUDIO — ລະບົບຈັດການ</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0c0f14;--bg2:#131720;--bg3:#1a1f2e;--border:#252c3d;--border2:#2e3650;--gold:#f0b429;--gold2:#ffd166;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--orange:#f97316;--purple:#a855f7;--cyan:#06b6d4;--text:#e2e8f0;--text2:#94a3b8;--text3:#4a5568;--sidebar:240px}
@@ -386,7 +386,7 @@ tbody tr:last-child td{border-bottom:none}
 <!-- ===== LOGIN ===== -->
 <div id="loginScreen">
   <div class="login-box">
-    <div class="login-logo">LUMINA</div>
+    <div class="login-logo">VANGJUT STUDIO</div>
     <div class="login-sub">MEDIA PRODUCTION · MANAGEMENT SYSTEM</div>
     <div class="fg"><label>ຊື່ຜູ້ໃຊ້</label><input id="li-user" type="text" placeholder="username" autocomplete="off"></div>
     <div class="fg"><label>ລະຫັດຜ່ານ</label><input id="li-pass" type="password" placeholder="••••••••"></div>
@@ -399,7 +399,7 @@ tbody tr:last-child td{border-bottom:none}
 <!-- ===== SIDEBAR ===== -->
 <div id="sidebar">
   <div class="sb-logo">
-    <div class="sb-brand">LUMINA</div>
+    <div class="sb-brand">VANGJUT STUDIO</div>
     <div class="sb-brand-sub">MANAGEMENT SYSTEM</div>
   </div>
   <div class="sb-user-wrap" onclick="openProfile()" title="ແກ້ໄຂ Profile">
@@ -629,7 +629,7 @@ tbody tr:last-child td{border-bottom:none}
       <div class="card">
         <div class="card-header"><span class="card-title">🏢 ຂໍ້ມູນບໍລິສັດ</span></div>
         <div class="card-body">
-          <div class="fg"><label>ຊື່ບໍລິສັດ</label><input type="text" value="LUMINA Media Production" id="co-name"></div>
+          <div class="fg"><label>ຊື່ບໍລິສັດ</label><input type="text" value="VANGJUT STUDIO" id="co-name"></div>
           <div class="fg"><label>ທີ່ຢູ່</label><input type="text" value="ວຽງຈັນ, ລາວ" id="co-addr"></div>
           <div class="fg"><label>ໂທລະສັບ</label><input type="text" value="+856 20 XXXX XXXX" id="co-tel"></div>
           <div class="fg"><label>Email</label><input type="text" value="lumina@email.com" id="co-email"></div>
@@ -751,16 +751,49 @@ tbody tr:last-child td{border-bottom:none}
 <!-- User -->
 <div class="modal-bg" id="m-user">
   <div class="modal">
-    <div class="modal-hdr"><span class="modal-title">👤 ເພີ່ມຜູ້ໃຊ້ລະບົບ</span><span class="modal-close" onclick="closeM('m-user')">✕</span></div>
+    <div class="modal-hdr"><span class="modal-title">👤 ສ້າງ Account ຜູ້ໃຊ້</span><span class="modal-close" onclick="closeM('m-user')">✕</span></div>
     <div class="modal-body">
-      <div class="fg"><label>ຊື່ *</label><input id="us-name"></div>
-      <div class="fg"><label>Username *</label><input id="us-uname"></div>
-      <div class="fg"><label>ລະຫັດຜ່ານ *</label><input id="us-pass" type="password"></div>
-      <div class="fg"><label>ສິດ</label><select id="us-role"><option value="admin">Admin</option><option value="staff">Staff</option></select></div>
+      <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text2);line-height:1.6">
+        💡 ສ້າງ Login Account ສຳລັບພະນັກງານ — ຫຼັງຈາກສ້າງແລ້ວ ໃຫ້ <b style="color:var(--gold)">Username</b> ແລະ <b style="color:var(--gold)">Password</b> ກັບພະນັກງານຄົນນັ້ນ
+      </div>
+      <div class="fg">
+        <label>ຊື່ (ສະແດງໃນລະບົບ) *</label>
+        <input id="us-name" placeholder="ເຊັ່ນ: ສົມພອນ ວົງໄຊ" oninput="autoUsername(this.value)">
+      </div>
+      <div class="fg">
+        <label>Username * <span style="font-size:10px;color:var(--text3);font-weight:400">(ໃຊ້ Login — ພາສາອັງກິດ/ຕົວເລກ)</span></label>
+        <input id="us-uname" placeholder="ເຊັ່ນ: somphone" autocomplete="off" style="font-family:'Space Mono',monospace;letter-spacing:1px">
+        <div id="us-uname-hint" style="font-size:10px;color:var(--text3);margin-top:4px"></div>
+      </div>
+      <div class="fg">
+        <label>ລະຫັດຜ່ານ * <span style="font-size:10px;color:var(--text3);font-weight:400">(ຢ່າງໜ້ອຍ 4 ຕົວ)</span></label>
+        <div style="position:relative;display:flex;gap:8px">
+          <input id="us-pass" type="password" placeholder="ຕັ້ງລະຫັດ" autocomplete="new-password" style="flex:1">
+          <button type="button" onclick="togglePassVis('us-pass',this)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text3);padding:0 12px;cursor:pointer;font-size:14px;white-space:nowrap">👁 ເບິ່ງ</button>
+          <button type="button" onclick="genPassword()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text3);padding:0 10px;cursor:pointer;font-size:12px;white-space:nowrap">🎲</button>
+        </div>
+        <div id="us-pass-hint" style="font-size:10px;color:var(--text3);margin-top:4px"></div>
+      </div>
+      <div class="fg">
+        <label>ສິດ</label>
+        <select id="us-role">
+          <option value="staff">👷 Staff — ພະນັກງານທົ່ວໄປ</option>
+          <option value="admin">⭐ Admin — ຜູ້ດູແລລະບົບ</option>
+        </select>
+      </div>
+      <div id="us-result" style="display:none;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);padding:14px 16px;margin-top:8px">
+        <div style="font-size:11px;color:var(--green);margin-bottom:8px;letter-spacing:1px">✅ ACCOUNT ສ້າງສຳເລັດ — ສົ່ງໃຫ້ພະນັກງານ:</div>
+        <div style="font-family:'Space Mono',monospace;font-size:12px;line-height:2">
+          🌐 URL: <span id="us-res-url" style="color:var(--gold)"></span><br>
+          👤 Username: <span id="us-res-uname" style="color:var(--gold)"></span><br>
+          🔑 Password: <span id="us-res-pass" style="color:var(--gold)"></span>
+        </div>
+        <button onclick="copyAccountInfo()" style="margin-top:10px;background:var(--gold);border:none;color:#0c0f14;padding:7px 16px;cursor:pointer;font-weight:700;font-size:12px;width:100%">📋 Copy ຂໍ້ມູນ Login</button>
+      </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeM('m-user')">ຍົກເລີກ</button>
-      <button class="btn btn-gold" onclick="saveUser()">💾 ບັນທຶກ</button>
+      <button class="btn btn-outline" onclick="closeM('m-user');document.getElementById('us-result').style.display='none'">ປິດ</button>
+      <button class="btn btn-gold" id="us-submit-btn" onclick="saveUser()">💾 ສ້າງ Account</button>
     </div>
   </div>
 </div>
@@ -1505,13 +1538,19 @@ function renderEmps(search='',dept=''){
   if(search)list=list.filter(e=>e.name.toLowerCase().includes(search.toLowerCase())||e.pos.toLowerCase().includes(search.toLowerCase()));
   if(dept)list=list.filter(e=>e.dept===dept);
   const DICON={Photography:'📸',Video:'🎬','Post-Production':'✂️',Admin:'🏢'};
-  document.getElementById('emp-grid').innerHTML=list.length?list.map((e,i)=>`
-    <div class="emp-card">
+  document.getElementById('emp-grid').innerHTML=list.length?list.map((e,i)=>{
+    // Check if this employee already has a login account
+    const hasAccount=S.users.some(u=>u.name===e.name||u.uname===e.name.toLowerCase().replace(/\s+/g,''));
+    return`<div class="emp-card">
       <div class="av" style="width:44px;height:44px;font-size:15px;background:${BGS[i%6]};color:${COLORS[i%7]}">${e.name.charAt(0)}</div>
       <div style="flex:1">
         <div style="font-size:14px;font-weight:700;margin-bottom:2px">${esc(e.name)}</div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">${DICON[e.dept]||'👤'} ${esc(e.pos)}</div>
-        <div style="font-size:11px;color:var(--text3)">${e.tel}</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">${DICON[e.dept]||'👤'} ${esc(e.pos)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">${e.tel}</div>
+        ${hasAccount
+          ?`<span style="font-size:10px;background:rgba(34,197,94,.15);color:var(--green);padding:2px 8px;border:1px solid rgba(34,197,94,.3)">✅ ມີ Account ແລ້ວ</span>`
+          :isAdmin?`<button class="btn btn-xs" style="background:rgba(240,180,41,.15);color:var(--gold);border:1px solid rgba(240,180,41,.3);font-size:10px" onclick="openCreateAccountForEmp('${esc(e.name)}')">🔑 ສ້າງ Login Account</button>`
+          :`<span style="font-size:10px;color:var(--text3)">⚠ ຍັງບໍ່ມີ Account</span>`}
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:7px">
         <span class="badge ${e.stat==='Active'?'bg-green':'bg-gray'}">${e.stat}</span>
@@ -1520,7 +1559,27 @@ function renderEmps(search='',dept=''){
           <button class="btn btn-danger btn-xs" onclick="delEmp(${e.id})">🗑</button>
         </div>`:''}
       </div>
-    </div>`).join(''):`<div class="empty"><div class="empty-icon">👥</div>ບໍ່ພົບພະນັກງານ</div>`;
+    </div>`;
+  }).join(''):`<div class="empty"><div class="empty-icon">👥</div>ບໍ່ພົບພະນັກງານ</div>`;
+}
+
+// Open user modal pre-filled with employee name
+function openCreateAccountForEmp(empName){
+  // Reset modal state
+  document.getElementById('us-result').style.display='none';
+  document.getElementById('us-submit-btn').style.display='';
+  document.getElementById('us-submit-btn').textContent='💾 ສ້າງ Account';
+  const passHint=document.getElementById('us-pass-hint');
+  if(passHint) passHint.textContent='';
+  // Pre-fill name
+  document.getElementById('us-name').value=empName;
+  document.getElementById('us-uname').dataset.manual='false';
+  autoUsername(empName);
+  // Auto-generate password
+  genPassword();
+  // Set role to staff
+  document.getElementById('us-role').value='staff';
+  openM('m-user');
 }
 
 async function saveEmp(){
@@ -2091,9 +2150,18 @@ function previewFile(input){
   const f=_upFile;
   const ext=f.name.split('.').pop().toLowerCase();
   const ic=['mp4','mov','avi','mkv'].includes(ext)?'🎬':['jpg','jpeg','png','zip'].includes(ext)?'📸':'📄';
+  const mb=(f.size/1024/1024).toFixed(1);
   document.getElementById('up-icon').textContent=ic;
   document.getElementById('up-fname').textContent=f.name;
-  document.getElementById('up-fsize').textContent=(f.size/1024/1024).toFixed(1)+' MB';
+  document.getElementById('up-fsize').textContent=mb+' MB';
+  // Warn if file > 45MB
+  if(f.size>45*1024*1024){
+    document.getElementById('up-fsize').style.color='var(--red)';
+    document.getElementById('up-fsize').innerHTML=`${mb} MB ⚠ ໃຫຍ່ເກີນ 45MB — <a href="javascript:setUploadTab('link')" style="color:var(--gold);text-decoration:underline">ໃຊ້ Link ແທນ</a>`;
+  } else {
+    document.getElementById('up-fsize').style.color='';
+    document.getElementById('up-fsize').textContent=mb+' MB ✓';
+  }
 }
 
 async function submitDraft(){
@@ -2151,29 +2219,50 @@ async function submitDraft(){
 
 async function uploadWithProgress(file, reviewId){
   return new Promise(async(resolve,reject)=>{
-    const ext=file.name.split('.').pop();
-    const path=`${reviewId}/${Date.now()}.${ext}`;
+    const ext=file.name.split('.').pop().toLowerCase();
+    const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+    const path=`${reviewId}/${Date.now()}_${safeName}`;
+    const MB = file.size/1024/1024;
+
+    // Supabase free tier hard limit ~50MB per upload
+    if(MB > 45){
+      reject(new Error(`ໄຟລ໌ ${MB.toFixed(1)}MB ໃຫຍ່ເກີນ 45MB ສຳລັບ upload ໂດຍກົງ\n\nວິທີແກ້: ໃຊ້ Tab "🔗 ໃສ່ Link" ແທນ\n\nຂັ້ນຕອນ:\n1. Upload ຂຶ້ນ Google Drive\n2. ກົດ Share → "Anyone with link"\n3. Copy link ວາງໃສ່ field Link`));
+      return;
+    }
+
     const xhr=new XMLHttpRequest();
     xhr.open('POST',`${SB_URL}/storage/v1/object/${SB_BUCKET}/${path}`);
     xhr.setRequestHeader('apikey',SB_KEY);
     xhr.setRequestHeader('Authorization','Bearer '+SB_KEY);
     xhr.setRequestHeader('Content-Type',file.type||'application/octet-stream');
     xhr.setRequestHeader('x-upsert','true');
+
+    // Timeout: 3 mins for large files
+    xhr.timeout = 180000;
+
     xhr.upload.onprogress=e=>{
       if(e.lengthComputable){
         const pct=Math.round(e.loaded/e.total*100);
+        const speed=e.loaded/(Date.now()-startTime+1)*1000/1024/1024;
         document.getElementById('up-prog-bar').style.width=pct+'%';
-        document.getElementById('up-prog-txt').textContent='ກຳລັງອັບໂຫຼດ '+pct+'%...';
+        document.getElementById('up-prog-txt').textContent=`ກຳລັງອັບໂຫຼດ ${pct}% — ${speed.toFixed(1)} MB/s`;
       }
     };
+    const startTime=Date.now();
     xhr.onload=()=>{
       if(xhr.status<300){
         resolve(`${SB_URL}/storage/v1/object/public/${SB_BUCKET}/${path}`);
       } else {
-        reject(new Error('Upload failed: '+xhr.responseText));
+        let msg='Upload failed ('+xhr.status+')';
+        try{const j=JSON.parse(xhr.responseText);msg=j.message||j.error||msg;}catch(e){}
+        if(xhr.status===413||msg.includes('size')||msg.includes('limit')){
+          msg='ໄຟລ໌ໃຫຍ່ເກີນຂອບເຂດ — ໃຊ້ Google Drive Link ແທນ';
+        }
+        reject(new Error(msg));
       }
     };
-    xhr.onerror=()=>reject(new Error('Network error'));
+    xhr.ontimeout=()=>reject(new Error('ໃຊ້ເວລາດົນເກີນ — ລອງ Google Drive Link ແທນ'));
+    xhr.onerror=()=>reject(new Error('ເຊື່ອມຕໍ່ຜິດພາດ — ລອງ Google Drive Link ແທນ'));
     xhr.send(file);
   });
 }
@@ -2288,13 +2377,67 @@ async function delUser(id,name){
   }catch(e){toast('❌ '+e.message,'e');}
 }
 
+// ── Auto-generate username from name ──
+function autoUsername(name){
+  if(!name) return;
+  // Convert Lao name → simple latin username suggestion
+  const hint = document.getElementById('us-uname-hint');
+  const unameEl = document.getElementById('us-uname');
+  // Only auto-fill if user hasn't typed their own username yet
+  if(unameEl.dataset.manual === 'true') return;
+  // Simple: take first word, lowercase, remove spaces/special chars
+  const parts = name.trim().split(/\s+/);
+  let suggestion = parts[0].toLowerCase().replace(/[^a-z0-9]/g,'');
+  if(suggestion.length < 2) suggestion = 'user';
+  unameEl.value = suggestion;
+  hint.textContent = '💡 Username ແນະນຳ: "'+suggestion+'" — ແກ້ໄຂໄດ້';
+  hint.style.color = 'var(--text3)';
+}
+// Mark username as manually edited
+document.addEventListener('DOMContentLoaded', ()=>{
+  const el = document.getElementById('us-uname');
+  if(el) el.addEventListener('input', ()=>{ el.dataset.manual='true'; });
+});
+
+// ── Generate random password ──
+function genPassword(){
+  const chars='abcdefghjkmnpqrstuvwxyz23456789';
+  let p='';
+  for(let i=0;i<8;i++) p+=chars[Math.floor(Math.random()*chars.length)];
+  const el=document.getElementById('us-pass');
+  if(el){ el.value=p; el.type='text'; }
+  const hint=document.getElementById('us-pass-hint');
+  if(hint){ hint.textContent='🔑 ລະຫັດ: '+p+' — ຈື່ ຫຼື Copy ໄວ້ກ່ອນ!'; hint.style.color='var(--gold)'; }
+}
+
+// ── Toggle password visibility ──
+function togglePassVis(inputId, btn){
+  const el=document.getElementById(inputId);
+  if(!el) return;
+  if(el.type==='password'){ el.type='text'; btn.textContent='🙈 ເຊື່ອງ'; }
+  else { el.type='password'; btn.textContent='👁 ເບິ່ງ'; }
+}
+
+// ── Copy account info ──
+function copyAccountInfo(){
+  const url=document.getElementById('us-res-url').textContent;
+  const uname=document.getElementById('us-res-uname').textContent;
+  const pass=document.getElementById('us-res-pass').textContent;
+  const txt=`VANGJUT STUDIO — ຂໍ້ມູນ Login\n🌐 URL: ${url}\n👤 Username: ${uname}\n🔑 Password: ${pass}`;
+  navigator.clipboard.writeText(txt).then(()=>toast('📋 Copy ຂໍ້ມູນສຳເລັດ ✓')).catch(()=>toast('Copy ຜິດພາດ','e'));
+}
+
 async function saveUser(){
   const n=document.getElementById('us-name').value.trim();
-  const u=document.getElementById('us-uname').value.trim();
+  const u=document.getElementById('us-uname').value.trim().toLowerCase().replace(/\s+/g,'');
   const p=document.getElementById('us-pass').value.trim();
   const role=document.getElementById('us-role').value;
-  if(!n||!u||!p){toast('ໃສ່ຂໍ້ມູນໃຫ້ຄົບ (ຊື່, username, ລະຫັດ)','e');return}
-  if(S.users.find(x=>x.uname===u)){toast('Username "'+u+'" ຖືກໃຊ້ແລ້ວ','e');return}
+  if(!n){toast('ໃສ່ຊື່ພະນັກງານກ່ອນ','e');return}
+  if(!u||u.length<2){toast('Username ຕ້ອງຢ່າງໜ້ອຍ 2 ຕົວ','e');return}
+  if(!p||p.length<4){toast('ລະຫັດຕ້ອງຢ່າງໜ້ອຍ 4 ຕົວ','e');return}
+  if(S.users.find(x=>x.uname===u)){toast('Username "'+u+'" ຖືກໃຊ້ແລ້ວ — ລອງຊື່ອື່ນ','e');return}
+  const btn=document.getElementById('us-submit-btn');
+  btn.disabled=true; btn.textContent='ກຳລັງສ້າງ...';
   try{
     const res=await fetch(`${SB_URL}/rest/v1/lm_users`,{
       method:'POST',
@@ -2304,17 +2447,32 @@ async function saveUser(){
         'Content-Type':'application/json',
         'Prefer':'return=representation',
       },
-      body:JSON.stringify({name:n,username:u,pass:p,role,status:'Active'}),
+      body:JSON.stringify({name:n, username:u, pass:p, role, status:'Active'}),
     });
     if(!res.ok){const e=await res.text();throw new Error(e);}
     const rows=await res.json();
-    const newUser={id:rows[0].id,name:n,uname:u,pass:p,role,status:'Active'};
+    const newUser={id:rows[0].id, name:n, uname:u, pass:p, role, status:'Active'};
     S.users.push(newUser);
-    closeM('m-user');
     renderAdmin();
-    toast('ສ້າງ Account "'+n+'" ('+u+') ✓');
-    ['us-name','us-uname','us-pass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
-  }catch(e){toast('❌ '+e.message,'e');console.error('saveUser:',e);}
+    // Show account info card
+    document.getElementById('us-res-url').textContent=window.location.origin+window.location.pathname;
+    document.getElementById('us-res-uname').textContent=u;
+    document.getElementById('us-res-pass').textContent=p;
+    document.getElementById('us-result').style.display='';
+    document.getElementById('us-submit-btn').style.display='none';
+    toast('✅ ສ້າງ Account "'+n+'" ສຳເລັດ!');
+    dbLogActivity('ສ້າງ Account ໃໝ່: '+n+' ('+role+')','#a855f7');
+    // Reset form for next user (but keep modal open to show result)
+    ['us-name','us-uname','us-pass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    const unEl=document.getElementById('us-uname'); if(unEl) unEl.dataset.manual='false';
+    const hint=document.getElementById('us-pass-hint'); if(hint) hint.textContent='';
+    const uhint=document.getElementById('us-uname-hint'); if(uhint) uhint.textContent='';
+  }catch(e){
+    toast('❌ '+e.message,'e');
+    console.error('saveUser:',e);
+  }finally{
+    btn.disabled=false; btn.textContent='💾 ສ້າງ Account';
+  }
 }
 
 // ===================================================================
@@ -2322,6 +2480,15 @@ async function saveUser(){
 // ===================================================================
 function openM(id){
   const m=document.getElementById(id);if(!m)return;
+  // Reset user modal result card when opening fresh (not from openCreateAccountForEmp)
+  if(id==='m-user'){
+    const res=document.getElementById('us-result');
+    if(res) res.style.display='none';
+    const submitBtn=document.getElementById('us-submit-btn');
+    if(submitBtn){ submitBtn.style.display=''; submitBtn.textContent='💾 ສ້າງ Account'; }
+    const unEl=document.getElementById('us-uname');
+    if(unEl&&!unEl.value) unEl.dataset.manual='false';
+  }
   // Populate dropdowns
   const projOpts='<option value="">— ເລືອກ —</option>'+S.projects.map(p=>`<option>${esc(p.name)}</option>`).join('');
   const empOpts=S.employees.map(e=>`<option>${esc(e.name)}</option>`).join('');
@@ -2657,7 +2824,7 @@ function toast(msg,type='s'){
   <div style="max-width:780px;margin:0 auto;padding:24px 16px">
     <!-- Header -->
     <div style="text-align:center;padding:32px 0 24px;border-bottom:1px solid var(--border);margin-bottom:28px">
-      <div style="font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--gold);letter-spacing:4px;margin-bottom:4px">LUMINA</div>
+      <div style="font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--gold);letter-spacing:4px;margin-bottom:4px">VANGJUT STUDIO</div>
       <div style="font-size:11px;color:var(--text3);letter-spacing:2px">CLIENT REVIEW PORTAL</div>
     </div>
     <div id="cl-page-content"></div>
