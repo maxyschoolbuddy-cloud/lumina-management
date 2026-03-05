@@ -2302,37 +2302,50 @@ async function uploadWithProgress(file, reviewId){
   }
 }
 
-// Upload via Cloudflare R2 Worker — ບໍ່ຈຳກັດຂະໜາດ
+// Upload via Cloudflare R2 Worker — ບໍ່ຈຳກັດຂະໜາດ (FormData POST)
 async function uploadToR2(file, reviewId){
   return new Promise((resolve,reject)=>{
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
     const path = `${reviewId}/${Date.now()}_${safeName}`;
-    const uploadUrl = `${R2_WORKER_URL}/upload/${path}`;
     const startTime = Date.now();
+
+    // ໃຊ້ FormData POST — stable ກວ່າ PUT streaming
+    const formData = new FormData();
+    formData.append('file', file, safeName);
+    formData.append('path', path);
+
     const xhr = new XMLHttpRequest();
-    xhr.open('PUT', uploadUrl);
-    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-    xhr.timeout = 0; // No timeout for large files
+    xhr.open('POST', `${R2_WORKER_URL}/upload`);
+    xhr.timeout = 0; // ບໍ່ timeout ສຳລັບ file ໃຫຍ່
+
     xhr.upload.onprogress = e=>{
       if(e.lengthComputable){
         const pct = Math.round(e.loaded/e.total*100);
-        const elapsed = (Date.now()-startTime)/1000;
+        const elapsed = (Date.now()-startTime)/1000||0.001;
         const speed = e.loaded/elapsed/1024/1024;
-        const remaining = elapsed/pct*(100-pct);
+        const remaining = pct>0?(elapsed/pct*(100-pct)):0;
         const remStr = remaining>60?Math.round(remaining/60)+'ນາທີ':Math.round(remaining)+'ວິ';
-        setUploadProgress(pct, `${pct}% — ${speed.toFixed(1)} MB/s — ເຫຼືອ ~${remStr}`);
+        setUploadProgress(pct, `${pct}% — ${speed.toFixed(1)} MB/s${pct<100?' — ເຫຼືອ ~'+remStr:''}`);
       }
     };
+
     xhr.onload = ()=>{
       if(xhr.status===200){
-        const publicUrl = `${R2_WORKER_URL}/file/${path}`;
-        resolve(publicUrl);
+        try{
+          const res = JSON.parse(xhr.responseText);
+          resolve(res.url || `${R2_WORKER_URL}/file/${path}`);
+        }catch(e){
+          resolve(`${R2_WORKER_URL}/file/${path}`);
+        }
       } else {
-        reject(new Error('R2 Upload failed ('+xhr.status+'): '+xhr.responseText));
+        let msg = 'R2 Upload failed ('+xhr.status+')';
+        try{ const j=JSON.parse(xhr.responseText); msg=j.error||msg; }catch(e){}
+        reject(new Error(msg));
       }
     };
-    xhr.onerror = ()=>reject(new Error('ເຊື່ອມຕໍ່ຜິດພາດ'));
-    xhr.send(file);
+    xhr.onerror = ()=>reject(new Error('ເຊື່ອມຕໍ່ R2 ຜິດພາດ — ກວດສອບ internet'));
+    xhr.ontimeout = ()=>reject(new Error('R2 timeout'));
+    xhr.send(formData);
   });
 }
 
