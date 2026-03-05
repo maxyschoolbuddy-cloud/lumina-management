@@ -624,7 +624,7 @@ tbody tr:last-child td{border-bottom:none}
     <div class="g2">
       <div class="card">
         <div class="card-header"><span class="card-title">👤 ຜູ້ໃຊ້ລະບົບ</span><span class="card-action" onclick="openM('m-user')">+ ເພີ່ມ</span></div>
-        <div class="card-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>ຊື່</th><th>Username</th><th>ສິດ</th><th>ສະຖານະ</th></tr></thead><tbody id="user-tbl"></tbody></table></div></div>
+        <div class="card-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>ຊື່</th><th>Username</th><th>ສິດ</th><th>ສະຖານະ</th><th>ຈັດການ</th></tr></thead><tbody id="user-tbl"></tbody></table></div></div>
       </div>
       <div class="card">
         <div class="card-header"><span class="card-title">🏢 ຂໍ້ມູນບໍລິສັດ</span></div>
@@ -1053,14 +1053,17 @@ async function loadAllData(){
       sbFetch('lm_reviews','GET',null,'?order=id'),
       sbFetch('lm_activities','GET',null,'?order=created_at.desc&limit=50'),
     ]);
+    // lm_users has flat columns (not jsonb data)
     S.users      = users.map(dbToUser);
-    S.projects   = projects.map(r=>({...(r.data||{}), id:r.id}));
-    S.tasks      = tasks.map(r=>({...(r.data||{}), id:r.id}));
-    S.employees  = employees.map(r=>({...(r.data||{}), id:r.id}));
-    S.equipment  = equipment.map(r=>({...(r.data||{}), id:r.id}));
-    S.schedules  = schedules.map(r=>({...(r.data||{}), id:r.id}));
-    S.reviews    = reviews.map(r=>({...(r.data||{}), id:r.id}));
-    S.activities = activities.map(r=>({...(r.data||{}), id:r.id}));
+    // All other tables store data in jsonb 'data' column
+    S.projects   = projects.map(r=>r&&r.data?{...r.data,id:r.id}:null).filter(Boolean);
+    S.tasks      = tasks.map(r=>r&&r.data?{...r.data,id:r.id}:null).filter(Boolean);
+    S.employees  = employees.map(r=>r&&r.data?{...r.data,id:r.id}:null).filter(Boolean);
+    S.equipment  = equipment.map(r=>r&&r.data?{...r.data,id:r.id}:null).filter(Boolean);
+    S.schedules  = schedules.map(r=>r&&r.data?{...r.data,id:r.id}:null).filter(Boolean);
+    S.reviews    = reviews.map(r=>r&&r.data?{...r.data,id:r.id}:null).filter(Boolean);
+    S.activities = activities.map(r=>r&&r.data?{...r.data,id:r.id}:null).filter(Boolean);
+    console.log('Loaded — users:'+S.users.length+' reviews:'+S.reviews.length+' projects:'+S.projects.length);
   }catch(e){
     console.error('Load error:',e);
     toast('⚠ ໂຫຼດຂໍ້ມູນບໍ່ສຳເລັດ: '+e.message,'e');
@@ -1118,16 +1121,18 @@ async function dbInsert(table, data){
   return await sbFetch(table,'POST',{data});
 }
 async function dbUpdate(table, id, patch){
-  if(table==='lm_users') return await sbFetch(table,'PATCH',patch,`?id=eq.${id}`);
-  // For jsonb tables: fetch current data, merge patch, write back
-  try{
-    const rows = await sbFetch(table,'GET',null,`?id=eq.${id}`);
-    if(rows.length){
-      const merged = {...(rows[0].data||{}), ...patch};
-      return await sbFetch(table,'PATCH',{data:merged},`?id=eq.${id}`);
-    }
-  }catch(e){}
-  return await sbFetch(table,'PATCH',{data:patch},`?id=eq.${id}`);
+  if(table==='lm_users'){
+    return await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{
+      method:'PATCH',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+      body:JSON.stringify(patch),
+    }).then(r=>r.ok?r.json():r.text().then(e=>{throw new Error(e);}));
+  }
+  // jsonb tables: fetch current, deep merge, write back
+  const rows = await sbFetch(table,'GET',null,`?id=eq.${id}`);
+  const current = (rows&&rows[0]&&rows[0].data)?rows[0].data:{};
+  const merged = {...current, ...patch};
+  return await sbFetch(table,'PATCH',{data:merged},`?id=eq.${id}`);
 }
 async function dbDelete(table, id){
   return await sbFetch(table,'DELETE',null,`?id=eq.${id}`);
@@ -1167,7 +1172,7 @@ async function doLogin(){
     const rows = await sbFetch('lm_users','GET',null,`?username=eq.${encodeURIComponent(u)}&status=eq.Active`);
     if(!rows.length){errEl.textContent='ຊື່ຜູ້ໃຊ້ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກ';return}
     const dbUser = rows[0];
-    if(dbUser.pass !== p){errEl.textContent='ຊື່ຜູ້ໃຊ້ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກ';return}
+    if(String(dbUser.pass) !== String(p)){errEl.textContent='ຊື່ຜູ້ໃຊ້ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກ';return}
     const user = dbToUser(dbUser);
     S.me = user;
     errEl.textContent='';
@@ -1348,7 +1353,7 @@ async function saveProject(){
   if(!n){toast('ກະລຸນາໃສ່ຊື່ໂປຣເຈັກ','e');return}
   const obj={name:n,client:document.getElementById('pj-client').value||'-',type:document.getElementById('pj-type').value,dead:document.getElementById('pj-dead').value||'-',stat:document.getElementById('pj-stat').value,team:document.getElementById('pj-team').value||'-',prog:parseInt(document.getElementById('pj-prog').value)||0,note:document.getElementById('pj-note').value};
   try{
-    if(id){await dbUpdate('lm_projects',id,obj);const p=S.projects.find(x=>x.id==id);if(p)Object.assign(p,obj);}
+    if(id){await dbUpdate('lm_projects',id,obj);const p=S.projects.find(x=>String(x.id)===String(id));if(p)Object.assign(p,obj);}
     else{const r=await dbInsert('lm_projects',obj);obj.id=r[0].id;S.projects.push(obj);}
     dbLogActivity((id?'ແກ້ໄຂ':'ເພີ່ມ')+'ໂປຣເຈັກ: '+n,'#06b6d4');
     closeM('m-proj');renderProjects(pjSF);toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ສຳເລັດ ✓');
@@ -1357,7 +1362,7 @@ async function saveProject(){
 
 function editProject(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ແກ້ໄຂໂປຣເຈັກໄດ້','e');return}
-  const p=S.projects.find(x=>x.id===id);if(!p)return;
+  const p=S.projects.find(x=>String(x.id)===String(id));if(!p)return;
   document.getElementById('pj-id').value=id;
   document.getElementById('pj-name').value=p.name;
   document.getElementById('pj-client').value=p.client;
@@ -1372,7 +1377,7 @@ function editProject(id){
 
 async function quickProg(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເຮັດໄດ້','e');return}
-  const p=S.projects.find(x=>x.id===id);if(!p)return;
+  const p=S.projects.find(x=>String(x.id)===String(id));if(!p)return;
   const v=prompt('ຄວາມຄືບໜ້າ "'+p.name+'" (0-100):',p.prog);
   if(v===null)return;
   p.prog=Math.min(100,Math.max(0,parseInt(v)||0));
@@ -1384,7 +1389,7 @@ async function quickProg(id){
 async function delProject(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ລົບໄດ້','e');return}
   if(!confirm('ລົບໂປຣເຈັກນີ້?'))return;
-  try{await dbDelete('lm_projects',id);S.projects=S.projects.filter(x=>x.id!==id);renderProjects();renderDash();toast('ລົບສຳເລັດ');}
+  try{await dbDelete('lm_projects',id);S.projects=S.projects.filter(x=>String(x.id)!==String(id));renderProjects();renderDash();toast('ລົບສຳເລັດ');}
   catch(e){toast('❌ '+e.message,'e');}
 }
 
@@ -1439,7 +1444,7 @@ function renderKanban(){
 }
 
 async function updateMyTaskProg(id,val){
-  const t=S.tasks.find(x=>x.id===id);
+  const t=S.tasks.find(x=>String(x.id)===String(id));
   if(!t)return;
   if(S.me&&S.me.role!=='admin'&&t.assign!==S.me.name){toast('⛔ ອັບເດດໄດ້ສະເພາະວຽກຂອງຕົວເອງ','e');return}
   t.prog=val;if(val>=100)t.stat='done';
@@ -1464,7 +1469,7 @@ async function saveTask(){
 }
 
 function editTask(id){
-  const t=S.tasks.find(x=>x.id===id);if(!t)return;
+  const t=S.tasks.find(x=>String(x.id)===String(id));if(!t)return;
   document.getElementById('tk-id').value=id;
   document.getElementById('tk-name').value=t.name;
   fillSelect('tk-proj',S.projects.map(p=>p.name),t.proj);
@@ -1476,7 +1481,7 @@ function editTask(id){
 }
 
 async function moveTask(id,stat){
-  const t=S.tasks.find(x=>x.id===id);
+  const t=S.tasks.find(x=>String(x.id)===String(id));
   if(t){
     t.stat=stat;renderKanban();updateBadges();
     try{await dbUpdate('lm_tasks',id,{stat});toast('ຍ້າຍ → '+KB_COLS.find(c=>c.k===stat).l);}
@@ -1485,7 +1490,7 @@ async function moveTask(id,stat){
 }
 
 async function delTask(id){
-  try{await dbDelete('lm_tasks',id);S.tasks=S.tasks.filter(x=>x.id!==id);renderKanban();updateBadges();toast('ລົບວຽກສຳເລັດ');}
+  try{await dbDelete('lm_tasks',id);S.tasks=S.tasks.filter(x=>String(x.id)!==String(id));renderKanban();updateBadges();toast('ລົບວຽກສຳເລັດ');}
   catch(e){toast('❌ '+e.message,'e');}
 }
 
@@ -1525,7 +1530,7 @@ async function saveEmp(){
   if(!n){toast('ໃສ່ຊື່ກ່ອນ','e');return}
   const obj={name:n,pos:document.getElementById('em-pos').value||'-',dept:document.getElementById('em-dept').value,tel:document.getElementById('em-tel').value||'-',email:document.getElementById('em-email').value||'-',stat:document.getElementById('em-stat').value};
   try{
-    if(id){await dbUpdate('lm_employees',id,obj);const e=S.employees.find(x=>x.id==id);if(e)Object.assign(e,obj);}
+    if(id){await dbUpdate('lm_employees',id,obj);const e=S.employees.find(x=>String(x.id)===String(id));if(e)Object.assign(e,obj);}
     else{const r=await dbInsert('lm_employees',obj);obj.id=r[0].id;S.employees.push(obj);}
     closeM('m-emp');renderEmps();renderDash();toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ✓');
   }catch(e){toast('❌ '+e.message,'e');}
@@ -1533,7 +1538,7 @@ async function saveEmp(){
 
 function editEmp(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ແກ້ໄຂໄດ້','e');return}
-  const e=S.employees.find(x=>x.id===id);if(!e)return;
+  const e=S.employees.find(x=>String(x.id)===String(id));if(!e)return;
   document.getElementById('em-id').value=id;
   document.getElementById('em-name').value=e.name;
   document.getElementById('em-pos').value=e.pos;
@@ -1547,7 +1552,7 @@ function editEmp(id){
 async function delEmp(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ລົບໄດ້','e');return}
   if(!confirm('ລົບພະນັກງານ?'))return;
-  try{await dbDelete('lm_employees',id);S.employees=S.employees.filter(x=>x.id!==id);renderEmps();renderDash();toast('ລົບສຳເລັດ');}
+  try{await dbDelete('lm_employees',id);S.employees=S.employees.filter(x=>String(x.id)!==String(id));renderEmps();renderDash();toast('ລົບສຳເລັດ');}
   catch(e){toast('❌ '+e.message,'e');}
 }
 
@@ -1610,7 +1615,7 @@ function renderEquip(search='',sf='',tf=''){
 
 function staffTakeEquip(id){
   if(!S.me){toast('ກະລຸນາ Login ກ່ອນ','e');return}
-  const e=S.equipment.find(x=>x.id===id);
+  const e=S.equipment.find(x=>String(x.id)===String(id));
   if(!e||e.stat!=='ພ້ອມໃຊ້'){toast('ອຸປະກອນນີ້ບໍ່ພ້ອມໃຊ້','e');return}
   document.getElementById('take-eq-name').textContent=e.name+' — '+e.type;
   document.getElementById('take-eq-id').value=id;
@@ -1626,7 +1631,7 @@ function staffTakeEquip(id){
 
 async function confirmTakeEquip(){
   const id=parseInt(document.getElementById('take-eq-id').value);
-  const e=S.equipment.find(x=>x.id===id);
+  const e=S.equipment.find(x=>String(x.id)===String(id));
   if(!e||!S.me){return}
   if(e.stat!=='ພ້ອມໃຊ້'){toast('ອຸປະກອນນີ້ຖືກໃຊ້ແລ້ວ','e');return}
   const proj=document.getElementById('take-eq-proj').value||'—';
@@ -1647,7 +1652,7 @@ async function confirmTakeEquip(){
 }
 
 async function staffReturnEquip(id){
-  const e=S.equipment.find(x=>x.id===id);
+  const e=S.equipment.find(x=>String(x.id)===String(id));
   if(!e)return;
   // Staff ສົ່ງຄືນໄດ້ສະເພາະຂອງຕົວເອງ
   if(S.me&&S.me.role!=='admin'&&e.owner!==S.me.name){
@@ -1677,7 +1682,7 @@ async function saveEquip(){
 
 function editEquip(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເຮັດໄດ້','e');return}
-  const e=S.equipment.find(x=>x.id===id);if(!e)return;
+  const e=S.equipment.find(x=>String(x.id)===String(id));if(!e)return;
   document.getElementById('eq-id').value=id;
   document.getElementById('eq-name').value=e.name;
   document.getElementById('eq-type').value=e.type;
@@ -1691,7 +1696,7 @@ function editEquip(id){
 
 async function cycleEquip(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເຮັດໄດ້','e');return}
-  const e=S.equipment.find(x=>x.id===id);if(!e)return;
+  const e=S.equipment.find(x=>String(x.id)===String(id));if(!e)return;
   const c=['ພ້ອມໃຊ້','ໃຊ້ຢູ່','ຊ່ອມ'];
   e.stat=c[(c.indexOf(e.stat)+1)%3];
   try{await dbUpdate('lm_equipment',id,{stat:e.stat});renderEquip();renderDash();toast(e.name+' → '+e.stat);}
@@ -1701,7 +1706,7 @@ async function cycleEquip(id){
 async function delEquip(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ລົບໄດ້','e');return}
   if(!confirm('ລົບອຸປະກອນ?'))return;
-  try{await dbDelete('lm_equipment',id);S.equipment=S.equipment.filter(x=>x.id!==id);renderEquip();renderDash();toast('ລົບສຳເລັດ');}
+  try{await dbDelete('lm_equipment',id);S.equipment=S.equipment.filter(x=>String(x.id)!==String(id));renderEquip();renderDash();toast('ລົບສຳເລັດ');}
   catch(e){toast('❌ '+e.message,'e');}
 }
 
@@ -1746,7 +1751,7 @@ async function saveSched(){
 
 function editSched(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ແກ້ໄຂໄດ້','e');return}
-  const s=S.schedules.find(x=>x.id===id);if(!s)return;
+  const s=S.schedules.find(x=>String(x.id)===String(id));if(!s)return;
   document.getElementById('sc-id').value=id;
   document.getElementById('sc-name').value=s.name;
   fillSelect('sc-proj',S.projects.map(p=>p.name),s.proj);
@@ -1760,13 +1765,13 @@ function editSched(id){
 
 async function doneSched(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເຮັດໄດ້','e');return}
-  const s=S.schedules.find(x=>x.id===id);
+  const s=S.schedules.find(x=>String(x.id)===String(id));
   if(s){s.stat='ສຳເລັດ';renderSched();try{await dbUpdate('lm_schedules',id,{stat:'ສຳເລັດ'});}catch(e){}toast('ທຳເຄື່ອງໝາຍສຳເລັດ ✓')}
 }
 async function delSched(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ລົບໄດ້','e');return}
   if(!confirm('ລົບ?'))return;
-  try{await dbDelete('lm_schedules',id);S.schedules=S.schedules.filter(x=>x.id!==id);renderSched();toast('ລົບສຳເລັດ');}
+  try{await dbDelete('lm_schedules',id);S.schedules=S.schedules.filter(x=>String(x.id)!==String(id));renderSched();toast('ລົບສຳເລັດ');}
   catch(e){toast('❌ '+e.message,'e');}
 }
 
@@ -1794,16 +1799,20 @@ function renderReview(){
 
   // Filter
   let list=S.reviews;
-  if(rvSearch)list=list.filter(r=>r.title.toLowerCase().includes(rvSearch.toLowerCase())||r.proj.toLowerCase().includes(rvSearch.toLowerCase()));
+  if(rvSearch)list=list.filter(r=>(r.title||'').toLowerCase().includes(rvSearch.toLowerCase())||(r.proj||'').toLowerCase().includes(rvSearch.toLowerCase()));
   if(rvPF)list=list.filter(r=>r.proj===rvPF);
   if(rvTF)list=list.filter(r=>r.type===rvTF);
   if(rvSF)list=list.filter(r=>r.stat===rvSF);
 
   document.getElementById('rv-list').innerHTML=list.length?list.map(r=>{
+    // Safety: ensure ALL fields exist (data from Supabase may be missing fields)
+    if(!r||!r.id){return '';}
+    const cmts=Array.isArray(r.comments)?r.comments:[];
+    const photos=Array.isArray(r.photos)?r.photos:[];
+    const versions=Array.isArray(r.versions)&&r.versions.length?r.versions:[{label:r.ver||'Draft 1',stat:'draft',date:r.at||''}];
     const s=SM[r.stat]||{l:r.stat,c:'bg-gray'};
-    const pending=r.comments.filter(c=>c.type==='revision'||c.type==='reject').length;
+    const pending=cmts.filter(c=>c.type==='revision'||c.type==='reject').length;
     const isPhoto=r.type==='photo';
-    const photos=r.photos||[];
     const photoSel=photos.filter(p=>p.ok===true).length;
     const photoRej=photos.filter(p=>p.ok===false).length;
     const canEdit=S.me&&(S.me.role==='admin'||(r.by===S.me.name));
@@ -1811,15 +1820,15 @@ function renderReview(){
       <div class="rv-hdr">
         <div class="rv-thumb" style="${isPhoto?'background:linear-gradient(135deg,var(--bg3),rgba(240,180,41,.08))':''}">${TI[r.type]||'📁'}</div>
         <div style="flex:1">
-          <div class="rv-title">${esc(r.title)}</div>
+          <div class="rv-title">${esc(r.title||'')}</div>
           <div class="rv-meta">
-            <span>📁 ${esc(r.proj)}</span>
-            <span>📅 ${r.at}</span>
-            <span>👤 ${esc(r.by)}</span>
-            <span>🗂 ${r.ver}</span>
-            <span>💾 ${r.fsize}</span>
+            <span>📁 ${esc(r.proj||'-')}</span>
+            <span>📅 ${r.at||'-'}</span>
+            <span>👤 ${esc(r.by||'-')}</span>
+            <span>🗂 ${r.ver||'-'}</span>
+            <span>💾 ${r.fsize||'-'}</span>
             ${isPhoto?`<span style="color:var(--cyan)">📸 ${r.photoCount||photos.length} ຮູບ</span>`:''}
-            <span>💬 ${r.comments.length}</span>
+            <span>💬 ${cmts.length}</span>
             ${pending?`<span class="badge bg-orange">⚠ ${pending} ຂໍແກ້ໄຂ</span>`:''}
           </div>
         </div>
@@ -1838,7 +1847,7 @@ function renderReview(){
         <div class="rv-stat"><div class="rv-stat-val" style="color:var(--gold)">${photos.filter(p=>p.ok===null).length}</div><div class="rv-stat-lbl">ລໍຖ້າ</div></div>
       </div>
       <div class="rv-photo-section">
-        <div class="rv-photo-count">ຕົວຢ່າງ ${Math.min(photos.length,8)} ຮູບ — ກົດ "📸 ເລືອກ/ກວດຮູບ" ເພື່ອຈັດການທັງໝົດ</div>
+        <div class="rv-photo-count">ຕົວຢ່າງ ${Math.min(photos.length,8)} ຮູບ</div>
         <div class="photo-grid">
           ${photos.slice(0,8).map(p=>`
           <div class="photo-thumb" onclick="openRVDetail(${r.id})" style="background:${p.ok===true?'rgba(34,197,94,.08)':p.ok===false?'rgba(239,68,68,.06)':'var(--bg3)'}">
@@ -1850,20 +1859,27 @@ function renderReview(){
         </div>
       </div>`:`
       <div style="padding:12px 18px">
-        <div class="ver-tabs">${r.versions.map((v,i)=>`<div class="ver-tab ${i===r.versions.length-1?'vt-active':''} ${v.stat==='rejected'?'vt-no':v.stat==='approved'||v.stat==='final'?'vt-ok':''}">${v.label}</div>`).join('')}</div>
-        <div style="font-size:12px;color:var(--text3)">📝 ${esc(r.note)}</div>
-        ${r.comments.length?`<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">${r.comments.slice(-2).map(c=>`<div style="display:flex;gap:8px;background:var(--bg3);border:1px solid var(--border);padding:8px 12px;flex:1;min-width:180px;max-width:400px"><div class="av" style="width:24px;height:24px;font-size:10px;background:rgba(59,130,246,.15);color:var(--blue)">${c.av}</div><div><div style="font-size:11px;font-weight:700">${esc(c.author)}</div><div style="font-size:12px;color:var(--text2)">${esc(c.text.substring(0,80))}${c.text.length>80?'...':''}</div></div></div>`).join('')}</div>`:''}
+        <div class="ver-tabs">${versions.map((v,i)=>`<div class="ver-tab ${i===versions.length-1?'vt-active':''} ${v.stat==='rejected'?'vt-no':v.stat==='approved'||v.stat==='final'?'vt-ok':''}">${v.label}</div>`).join('')}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:6px">📝 ${esc(r.note||'-')}</div>
+        ${cmts.length?`<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">${cmts.slice(-2).map(c=>`<div style="display:flex;gap:8px;background:var(--bg3);border:1px solid var(--border);padding:8px 12px;flex:1;min-width:180px;max-width:400px"><div class="av" style="width:24px;height:24px;font-size:10px;background:rgba(59,130,246,.15);color:var(--blue)">${c.av||'?'}</div><div><div style="font-size:11px;font-weight:700">${esc(c.author||'')}</div><div style="font-size:12px;color:var(--text2)">${esc((c.text||'').substring(0,80))}${(c.text||'').length>80?'...':''}</div></div></div>`).join('')}</div>`:''}
       </div>`}
     </div>`;
-  }).join(''):`<div class="empty"><div class="empty-icon">🎞️</div>ບໍ່ພົບລາຍການ</div>`;
+  }).filter(Boolean).join(''):`<div class="empty"><div class="empty-icon">🎞️</div>
+    <div style="margin-bottom:12px">${rvSearch||rvPF||rvTF||rvSF?'ບໍ່ພົບລາຍການ — ລອງ clear filter':'ຍັງບໍ່ມີ Draft — ກົດ "+ ອັບໂຫຼດ Draft ໃໝ່" ເພື່ອເລີ່ມ'}</div>
+    ${rvSearch||rvPF||rvTF||rvSF?`<button class="btn btn-outline btn-sm" onclick="rvSearch='';rvPF='';rvTF='';rvSF='';renderReview()">🔄 Clear Filter</button>`:''}
+  </div>`;
   updateBadges();
 }
 
 function openRVDetail(id){
-  const r=S.reviews.find(x=>x.id===id);if(!r)return;
-  curRV=id;
+  const r=S.reviews.find(x=>String(x.id)===String(id));if(!r)return;
+  curRV=r.id;
+  // Safety: ensure arrays exist (data from DB may be missing fields)
+  if(!Array.isArray(r.comments))r.comments=[];
+  if(!Array.isArray(r.versions)||!r.versions.length)r.versions=[{label:r.ver||'Draft 1',stat:'draft',date:r.at||''}];
+  if(!Array.isArray(r.photos))r.photos=[];
   const isPhoto=r.type==='photo';
-  const photos=r.photos||[];
+  const photos=r.photos;
   const canAct=S.me&&(S.me.role==='admin'||r.by===S.me.name||r.reviewer===S.me.name);
   const STEPS=['draft','reviewing','approved','final'];
   const si=STEPS.indexOf(r.stat);
@@ -2001,7 +2017,7 @@ function openRVDetail(id){
 
 
 async function submitComment(){
-  const r=S.reviews.find(x=>x.id===curRV);if(!r)return;
+  const r=S.reviews.find(x=>String(x.id)===String(curRV));if(!r)return;
   const txt=document.getElementById('rvd-cmt-txt').value.trim();
   if(!txt){toast('ໃສ່ຄຳເຫັນກ່ອນ','e');return}
   const type=document.getElementById('rvd-cmt-type').value;
@@ -2015,7 +2031,7 @@ async function submitComment(){
 }
 
 async function approveRV(id){
-  const r=S.reviews.find(x=>x.id===id);if(!r)return;
+  const r=S.reviews.find(x=>String(x.id)===String(id));if(!r)return;
   r.stat='approved';
   const user=S.me||{name:'Admin'};
   r.comments.push({id:uid(),author:user.name,av:user.name.charAt(0),col:'#22c55e',type:'approve',text:'✅ ອະນຸມັດ '+r.ver+' — ພ້ອມ Finalize',time:now()});
@@ -2026,14 +2042,14 @@ async function approveRV(id){
 }
 
 function rejectRV(id){
-  const r=S.reviews.find(x=>x.id===id);if(!r)return;
+  const r=S.reviews.find(x=>String(x.id)===String(id));if(!r)return;
   r.stat='reviewing';r.versions[r.versions.length-1].stat='rejected';
   document.getElementById('rvd-cmt-type').value='revision';
   toast('ໝາຍເປັນ "ຂໍແກ້ໄຂ" — ໃສ່ Comment ລາຍລະອຽດ','i');
 }
 
 async function addVersion(id){
-  const r=S.reviews.find(x=>x.id===id);if(!r)return;
+  const r=S.reviews.find(x=>String(x.id)===String(id));if(!r)return;
   const vn=r.versions.length+1;
   const label=vn>=4?'Final':'Draft '+vn;
   r.versions.push({label,stat:'draft',date:today()});
@@ -2044,7 +2060,7 @@ async function addVersion(id){
 }
 
 async function promoteToFinal(id){
-  const r=S.reviews.find(x=>x.id===id);if(!r)return;
+  const r=S.reviews.find(x=>String(x.id)===String(id));if(!r)return;
   if(r.stat!=='approved'&&!confirm('ຍັງບໍ່ Approve — ສ້າງ Final ຕ່ອງ?'))return;
   r.stat='final';r.ver='Final';
   r.link='https://lumina.la/download/'+r.proj.replace(/\s+/g,'-').toLowerCase().replace(/[^a-z0-9-]/g,'')+'-'+Math.random().toString(36).substr(2,6);
@@ -2100,7 +2116,7 @@ async function submitDraft(){
     reviewer:document.getElementById('up-reviewer').value||'-',
     at:today(), note:document.getElementById('up-note').value||'-',
     versions:[{label:ver,stat:'draft',date:today()}],
-    comments:[], fileUrl:'', linkUrl: useLink?linkVal:'',
+    comments:[], photos:[], fileUrl:'', linkUrl: useLink?linkVal:'',
     clientToken: Math.random().toString(36).substr(2,10),
   };
 
@@ -2235,26 +2251,70 @@ function renderReports(){
 
 function renderAdmin(){
   document.getElementById('user-tbl').innerHTML=S.users.map(u=>`
-    <tr><td class="td-main">${esc(u.name)}</td><td class="td-mono">${esc(u.uname)}</td>
-    <td><span class="badge ${u.role==='admin'?'bg-gold':'bg-blue'}">${u.role.toUpperCase()}</span></td>
-    <td><span class="badge bg-green">${u.status}</span></td></tr>`).join('');
+    <tr>
+      <td class="td-main">${esc(u.name)}</td>
+      <td class="td-mono">${esc(u.uname)}</td>
+      <td><span class="badge ${u.role==='admin'?'bg-gold':'bg-blue'}">${u.role.toUpperCase()}</span></td>
+      <td><span class="badge bg-green">${u.status}</span></td>
+      <td>
+        <button class="btn btn-xs btn-outline" onclick="editUser(${u.id})">✏ ແກ້ໄຂ</button>
+        ${u.id!==S.me?.id?`<button class="btn btn-xs btn-danger" onclick="delUser(${u.id},'${esc(u.name)}')">🗑</button>`:'<span style="font-size:10px;color:var(--text3)">ຕົວເຈົ້າ</span>'}
+      </td>
+    </tr>`).join('');
+}
+
+async function editUser(id){
+  const u=S.users.find(x=>String(x.id)===String(id));if(!u)return;
+  const name=prompt('ຊື່ໃໝ່:',u.name);
+  if(name===null)return;
+  const pass=prompt('ລະຫັດໃໝ່ (ຫວ່າງ=ບໍ່ປ່ຽນ):','');
+  if(pass===null)return;
+  try{
+    const patch={name:name||u.name};
+    if(pass.trim())patch.pass=pass.trim();
+    await sbFetch('lm_users','PATCH',patch,`?id=eq.${id}`);
+    u.name=name||u.name;
+    if(pass.trim())u.pass=pass.trim();
+    renderAdmin();toast('ແກ້ໄຂ "'+u.name+'" ✓');
+  }catch(e){toast('❌ '+e.message,'e');}
+}
+
+async function delUser(id,name){
+  if(!confirm('ລົບ "'+name+'" ອອກ?'))return;
+  try{
+    await sbFetch('lm_users','DELETE',null,`?id=eq.${id}`);
+    S.users=S.users.filter(x=>String(x.id)!==String(id));
+    renderAdmin();toast('ລົບ "'+name+'" ✓');
+  }catch(e){toast('❌ '+e.message,'e');}
 }
 
 async function saveUser(){
   const n=document.getElementById('us-name').value.trim();
   const u=document.getElementById('us-uname').value.trim();
-  const p=document.getElementById('us-pass').value;
+  const p=document.getElementById('us-pass').value.trim();
   const role=document.getElementById('us-role').value;
-  if(!n||!u||!p){toast('ໃສ່ຂໍ້ມູນໃຫ້ຄົບ','e');return}
-  if(S.users.find(x=>x.uname===u)){toast('Username ນີ້ຖືກໃຊ້ແລ້ວ','e');return}
-  const obj={name:n,uname:u,pass:p,role,status:'Active'};
+  if(!n||!u||!p){toast('ໃສ່ຂໍ້ມູນໃຫ້ຄົບ (ຊື່, username, ລະຫັດ)','e');return}
+  if(S.users.find(x=>x.uname===u)){toast('Username "'+u+'" ຖືກໃຊ້ແລ້ວ','e');return}
   try{
-    const r=await dbUpsertUser(obj);
-    if(r&&r[0]){obj.id=r[0].id;}else{obj.id=uid();}
-    S.users.push(obj);
-    closeM('m-user');renderAdmin();toast('ເພີ່ມຜູ້ໃຊ້ "'+n+'" ✓');
+    const res=await fetch(`${SB_URL}/rest/v1/lm_users`,{
+      method:'POST',
+      headers:{
+        'apikey':SB_KEY,
+        'Authorization':'Bearer '+SB_KEY,
+        'Content-Type':'application/json',
+        'Prefer':'return=representation',
+      },
+      body:JSON.stringify({name:n,username:u,pass:p,role,status:'Active'}),
+    });
+    if(!res.ok){const e=await res.text();throw new Error(e);}
+    const rows=await res.json();
+    const newUser={id:rows[0].id,name:n,uname:u,pass:p,role,status:'Active'};
+    S.users.push(newUser);
+    closeM('m-user');
+    renderAdmin();
+    toast('ສ້າງ Account "'+n+'" ('+u+') ✓');
     ['us-name','us-uname','us-pass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
-  }catch(e){toast('❌ '+e.message,'e');}
+  }catch(e){toast('❌ '+e.message,'e');console.error('saveUser:',e);}
 }
 
 // ===================================================================
@@ -2353,27 +2413,42 @@ function openProfile(){
 async function saveProfile(){
   if(!S.me)return;
   const name=document.getElementById('pf-name').value.trim();
-  const pass=document.getElementById('pf-pass').value;
-  const pass2=document.getElementById('pf-pass2').value;
+  const pass=document.getElementById('pf-pass').value.trim();
+  const pass2=document.getElementById('pf-pass2').value.trim();
   const msg=document.getElementById('pf-msg');
   if(!name){msg.textContent='ກະລຸນາໃສ່ຊື່';msg.style.color='var(--red)';return}
   if(pass&&pass!==pass2){msg.textContent='ລະຫັດຜ່ານບໍ່ຕົງກັນ';msg.style.color='var(--red)';return}
-  // Update user in users array
-  const uObj=S.users.find(x=>x.id===S.me.id);
-  if(uObj){
-    uObj.name=name;
-    if(pass)uObj.pass=pass;
+  msg.textContent='ກຳລັງບັນທຶກ...';msg.style.color='var(--text3)';
+  try{
+    const updates={name};
+    if(pass) updates.pass=pass;
+    // Direct REST PATCH on lm_users
+    const res=await fetch(`${SB_URL}/rest/v1/lm_users?id=eq.${S.me.id}`,{
+      method:'PATCH',
+      headers:{
+        'apikey':SB_KEY,
+        'Authorization':'Bearer '+SB_KEY,
+        'Content-Type':'application/json',
+        'Prefer':'return=representation',
+      },
+      body:JSON.stringify(updates),
+    });
+    if(!res.ok){const e=await res.text();throw new Error(e);}
+    // Update local state
+    const uObj=S.users.find(x=>String(x.id)===String(S.me.id));
+    if(uObj){uObj.name=name;if(pass)uObj.pass=pass;}
+    S.me.name=name;
+    if(pass)S.me.pass=pass;
+    document.getElementById('sbAv').textContent=name.charAt(0);
+    document.getElementById('sbName').textContent=name;
+    msg.textContent='ບັນທຶກສຳເລັດ ✓';msg.style.color='var(--green)';
+    setTimeout(()=>closeM('m-profile'),900);
+    toast('ອັບເດດ Profile "'+name+'" ✓');
+    if(document.getElementById('sec-admin').classList.contains('active'))renderAdmin();
+  }catch(e){
+    msg.textContent='❌ ບໍ່ສຳເລັດ: '+e.message;msg.style.color='var(--red)';
+    console.error('saveProfile error:',e);
   }
-  S.me.name=name;
-  if(pass)S.me.pass=pass;
-  // Update sidebar
-  document.getElementById('sbAv').textContent=name.charAt(0);
-  document.getElementById('sbName').textContent=name;
-  msg.textContent='ບັນທຶກສຳເລັດ ✓';msg.style.color='var(--green)';
-  setTimeout(()=>closeM('m-profile'),800);
-  toast('ອັບເດດ Profile "'+name+'" ✓');
-  if(document.getElementById('sec-admin').classList.contains('active'))renderAdmin();
-  
 }
 
 // ===================================================================
