@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LUMINA — ລະບົບຈັດການ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0f14;--bg2:#131720;--bg3:#1a1f2e;--border:#252c3d;--border2:#2e3650;--gold:#f0b429;--gold2:#ffd166;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--orange:#f97316;--purple:#a855f7;--cyan:#06b6d4;--text:#e2e8f0;--text2:#94a3b8;--text3:#4a5568;--sidebar:240px}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Noto Sans Lao',sans-serif;background:var(--bg);color:var(--text);display:flex;font-size:14px}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column}
+.login-box{background:var(--bg2);border:1px solid var(--border);padding:48px 40px;width:400px;position:relative}
+.login-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.login-logo{font-family:'Space Mono',monospace;font-size:24px;font-weight:700;color:var(--gold);letter-spacing:4px;text-align:center;margin-bottom:4px}
+.login-sub{text-align:center;color:var(--text2);font-size:11px;margin-bottom:36px;letter-spacing:1px}
+.fg{margin-bottom:18px}
+.fg label{display:block;font-size:11px;letter-spacing:1px;color:var(--text2);margin-bottom:7px;text-transform:uppercase}
+.fg input,.fg select,.fg textarea{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 14px;font-family:'Noto Sans Lao',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gold)}
+.fg textarea{resize:vertical;min-height:72px}
+.fg select option{background:var(--bg3)}
+.login-hint{text-align:center;font-size:11px;color:var(--text3);margin-top:14px}
+.login-hint span{color:var(--gold)}
+.login-err{color:var(--red);font-size:12px;text-align:center;margin-top:10px;min-height:18px}
+
+/* BUTTONS */
+.btn{padding:10px 20px;font-family:'Noto Sans Lao',sans-serif;font-size:13px;cursor:pointer;border:none;transition:all .2s;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.btn-gold{background:var(--gold);color:#0c0f14;font-weight:700}
+.btn-gold:hover{background:var(--gold2)}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger:hover{opacity:.85}
+.btn-success{background:var(--green);color:#fff}
+.btn-success:hover{opacity:.85}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-blue:hover{opacity:.85}
+.btn-purple{background:var(--purple);color:#fff}
+.btn-purple:hover{opacity:.85}
+.btn-full{width:100%;justify-content:center}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-xs{padding:3px 9px;font-size:11px}
+
+/* SIDEBAR */
+#sidebar{width:var(--sidebar);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;height:100vh;overflow-y:auto}
+.sb-logo{padding:18px 20px 14px;border-bottom:1px solid var(--border)}
+.sb-brand{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--gold);letter-spacing:3px}
+.sb-brand-sub{font-size:10px;color:var(--text3);letter-spacing:1px;margin-top:2px}
+.sb-user{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+
+/* PROFILE */
+.sb-user-wrap{cursor:pointer;transition:background .15s;padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sb-user-wrap:hover{background:rgba(240,180,41,.05)}
+.sb-edit-hint{font-size:9px;color:var(--text3);margin-top:2px;letter-spacing:.5px}
+.profile-av-wrap{position:relative;display:inline-block;cursor:pointer}
+.profile-av-wrap:hover .profile-av-overlay{opacity:1}
+.profile-av-overlay{position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:14px;opacity:0;transition:opacity .2s}
+.profile-av-big{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;margin:0 auto 14px;border:2px solid var(--gold)}
+
+/* PHOTO GALLERY */
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:12px}
+.photo-thumb{aspect-ratio:1;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;cursor:pointer;transition:border-color .2s}
+.photo-thumb:hover{border-color:var(--gold)}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-thumb-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:100%;color:var(--text3)}
+.photo-thumb-placeholder span{font-size:24px}
+.photo-thumb-placeholder small{font-size:10px;letter-spacing:.5px}
+.photo-overlay{position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;gap:8px;opacity:0;transition:opacity .2s}
+.photo-thumb:hover .photo-overlay{opacity:1}
+.photo-count-badge{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;padding:2px 6px;font-family:'Space Mono',monospace}
+.photo-upload-add{border:2px dashed var(--border2)!important;cursor:pointer}
+.photo-upload-add:hover{border-color:var(--gold)!important}
+
+/* VIDEO PREVIEW */
+.video-preview-box{background:var(--bg3);border:1px solid var(--border);padding:20px;display:flex;flex-direction:column;align-items:center;gap:10px;position:relative}
+.video-play-btn{width:56px;height:56px;border-radius:50%;background:rgba(240,180,41,.2);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;transition:background .2s}
+.video-play-btn:hover{background:rgba(240,180,41,.4)}
+.video-meta{font-size:11px;color:var(--text3);text-align:center}
+
+/* PERMISSION LOCK */
+.locked-row{opacity:.45;pointer-events:none}
+.perm-badge{font-size:9px;padding:2px 7px;background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.25);letter-spacing:.5px;margin-left:6px}
+
+/* REVIEW TABS - photo vs video */
+.rv-type-tabs{display:flex;gap:0;border:1px solid var(--border);margin-bottom:14px;overflow:hidden}
+.rv-type-tab{flex:1;padding:9px 12px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text3);border-right:1px solid var(--border)}
+.rv-type-tab:last-child{border-right:none}
+.rv-type-tab.active{background:var(--gold);color:var(--bg)}
+.rv-type-tab:hover:not(.active){background:rgba(255,255,255,.04);color:var(--text)}
+
+/* REVIEW CARD EXPANDED */
+.rv-photo-section{padding:14px 18px;border-top:1px solid var(--border)}
+.rv-photo-count{font-size:11px;color:var(--text3);margin-bottom:10px;font-family:'Space Mono',monospace;letter-spacing:.5px}
+.rv-stats-row{display:flex;gap:10px;flex-wrap:wrap;padding:10px 18px;background:var(--bg3);border-top:1px solid var(--border)}
+.rv-stat{text-align:center;flex:1;min-width:60px}
+.rv-stat-val{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--gold)}
+.rv-stat-lbl{font-size:10px;color:var(--text3);margin-top:2px}
+.sb-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.sb-name{font-size:13px;font-weight:600}
+.sb-role{font-size:10px;color:var(--text2)}
+.sb-badge{margin-left:auto;font-size:9px;padding:2px 6px;background:rgba(240,180,41,.15);color:var(--gold);border:1px solid rgba(240,180,41,.3);letter-spacing:1px;white-space:nowrap}
+.nav-sec{padding:14px 0 6px}
+.nav-sec-title{font-size:9px;letter-spacing:2px;color:var(--text3);padding:0 20px 7px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;color:var(--text2);transition:all .15s;font-size:13px;position:relative;user-select:none}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.nav-item.active{color:var(--gold);background:rgba(240,180,41,.08)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold)}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:10px;font-family:'Space Mono',monospace;min-width:16px;text-align:center}
+.nav-badge.blue{background:var(--blue)}
+.nav-badge.green{background:var(--green)}
+.sb-bottom{margin-top:auto;padding:14px;border-top:1px solid var(--border)}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{height:54px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:14px;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:700}
+.topbar-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.topbar-time{font-family:'Space Mono',monospace;font-size:11px;color:var(--text3)}
+.notif-btn{width:32px;height:32px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;position:relative;transition:border-color .2s}
+.notif-btn:hover{border-color:var(--gold)}
+.notif-dot{position:absolute;top:5px;right:5px;width:6px;height:6px;background:var(--red);border-radius:50%}
+
+.content{flex:1;overflow-y:auto;padding:22px}
+.section{display:none}
+.section.active{display:block}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border)}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.card-title{font-size:13px;font-weight:600}
+.card-action{font-size:11px;color:var(--gold);cursor:pointer}
+.card-action:hover{text-decoration:underline}
+.card-body{padding:18px}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);padding:18px;position:relative;overflow:hidden}
+.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.stat-card.c-gold::after{background:var(--gold)}
+.stat-card.c-blue::after{background:var(--blue)}
+.stat-card.c-green::after{background:var(--green)}
+.stat-card.c-purple::after{background:var(--purple)}
+.stat-card.c-cyan::after{background:var(--cyan)}
+.stat-card.c-orange::after{background:var(--orange)}
+.stat-label{font-size:11px;color:var(--text2);letter-spacing:.5px;margin-bottom:7px}
+.stat-value{font-family:'Space Mono',monospace;font-size:28px;font-weight:700;line-height:1}
+.stat-sub{font-size:11px;color:var(--green);margin-top:5px}
+.stat-icon{position:absolute;top:14px;right:14px;font-size:22px;opacity:.18}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead tr{border-bottom:1px solid var(--border)}
+th{text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:8px 14px;white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid rgba(37,44,61,.5);font-size:13px;color:var(--text2);vertical-align:middle}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+tbody tr:last-child td{border-bottom:none}
+.td-main{color:var(--text);font-weight:600}
+.td-mono{font-family:'Space Mono',monospace;font-size:11px;color:var(--text3)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;font-size:10px;font-weight:600;letter-spacing:.5px;border-radius:2px;white-space:nowrap}
+.bg-green{background:rgba(34,197,94,.15);color:var(--green)}
+.bg-blue{background:rgba(59,130,246,.15);color:var(--blue)}
+.bg-gold{background:rgba(240,180,41,.15);color:var(--gold)}
+.bg-red{background:rgba(239,68,68,.15);color:var(--red)}
+.bg-purple{background:rgba(168,85,247,.15);color:var(--purple)}
+.bg-orange{background:rgba(249,115,22,.15);color:var(--orange)}
+.bg-gray{background:rgba(100,116,139,.15);color:#64748b}
+.bg-cyan{background:rgba(6,182,212,.15);color:var(--cyan)}
+
+/* AVATAR */
+.av{border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+
+/* PROGRESS */
+.prog{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:5px}
+.prog-fill{height:100%;border-radius:2px;transition:width .5s ease}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.searchbox{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);padding:8px 14px;flex:1;max-width:280px}
+.searchbox input{background:none;border:none;color:var(--text);outline:none;font-size:13px;width:100%;font-family:'Noto Sans Lao',sans-serif}
+.searchbox span{color:var(--text3)}
+.fsel{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:8px 12px;font-size:12px;outline:none;cursor:pointer;font-family:'Noto Sans Lao',sans-serif}
+.fsel:focus{border-color:var(--gold)}
+
+/* SECTION HEAD */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.sec-head h2{font-size:17px;font-weight:700}
+.sec-head p{font-size:12px;color:var(--text3);margin-top:2px}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);width:520px;max-width:100%;max-height:90vh;overflow-y:auto;position:relative}
+.modal-wide{width:820px}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:15px;font-weight:700}
+.modal-close{cursor:pointer;color:var(--text3);font-size:20px;line-height:1;transition:color .2s;padding:2px 6px}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:22px}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+
+/* KANBAN */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;height:calc(100vh - 210px)}
+.kb-col{background:var(--bg2);border:1px solid var(--border);display:flex;flex-direction:column}
+.kb-hdr{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.kb-hdr-dot{width:8px;height:8px;border-radius:50%}
+.kb-title{font-size:12px;font-weight:600;letter-spacing:.5px}
+.kb-count{margin-left:auto;font-family:'Space Mono',monospace;font-size:10px;color:var(--text3)}
+.kb-body{padding:10px;overflow-y:auto;flex:1}
+.task-card{background:var(--bg3);border:1px solid var(--border);border-left:3px solid;padding:10px 12px;margin-bottom:8px;transition:all .15s}
+.task-card:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.task-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.task-proj{font-size:10px;color:var(--text3);margin-bottom:7px}
+.task-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.task-due{font-size:10px;color:var(--text3);font-family:'Space Mono',monospace}
+.task-due.late{color:var(--red)}
+.task-actions{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+
+/* ACTIVITY */
+.act-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid rgba(37,44,61,.5)}
+.act-item:last-child{border-bottom:none}
+.act-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.act-text{font-size:12px;color:var(--text2);line-height:1.5}
+.act-time{font-size:10px;color:var(--text3);margin-top:2px;font-family:'Space Mono',monospace}
+
+/* INFO ROW */
+.info-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(37,44,61,.4)}
+.info-row:last-child{border-bottom:none}
+.info-key{font-size:12px;color:var(--text3)}
+.info-val{font-size:13px;color:var(--text);font-weight:500;text-align:right;max-width:60%}
+
+/* EMPLOYEE CARD */
+.emp-card{background:var(--bg3);border:1px solid var(--border);padding:18px;display:flex;align-items:center;gap:14px;transition:border-color .2s;cursor:default}
+.emp-card:hover{border-color:var(--border2)}
+
+/* MINI CHART */
+.mini-chart{display:flex;align-items:flex-end;gap:3px;height:56px}
+.mini-bar{flex:1;background:rgba(240,180,41,.25);border-radius:2px 2px 0 0;transition:background .2s}
+.mini-bar:hover,.mini-bar.hi{background:var(--gold)}
+
+/* DONUT */
+.donut-wrap{display:flex;align-items:center;gap:20px}
+.donut{width:90px;height:90px;border-radius:50%;flex-shrink:0}
+.leg{display:flex;flex-direction:column;gap:7px}
+.leg-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2)}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* REVIEW */
+.pipe{display:flex;background:var(--bg2);border:1px solid var(--border);margin-bottom:22px;overflow:hidden}
+.pipe-step{flex:1;padding:13px 14px;display:flex;align-items:center;gap:10px;border-right:1px solid var(--border);cursor:pointer;transition:background .2s;user-select:none}
+.pipe-step:last-child{border-right:none}
+.pipe-step:hover{background:rgba(255,255,255,.03)}
+.pipe-step.ps-active{background:rgba(240,180,41,.07)}
+.pipe-step.ps-active .ps-num{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.pipe-step.ps-done .ps-num{background:var(--green);color:#fff;border-color:var(--green)}
+.pipe-step.ps-done .ps-lbl{color:var(--green)}
+.ps-num{width:26px;height:26px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'Space Mono',monospace;flex-shrink:0;transition:all .3s}
+.ps-lbl{font-size:12px;font-weight:600;color:var(--text2)}
+.ps-cnt{font-size:10px;color:var(--text3);margin-top:1px}
+
+.rv-card{background:var(--bg2);border:1px solid var(--border);margin-bottom:10px;transition:border-color .2s}
+.rv-card:hover{border-color:var(--border2)}
+.rv-hdr{padding:14px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.rv-thumb{width:52px;height:52px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.rv-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px}
+.rv-meta{font-size:11px;color:var(--text3);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.rv-actions{margin-left:auto;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.rv-body{padding:14px 18px}
+
+.ver-tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap}
+.ver-tab{padding:4px 12px;font-size:10px;font-family:'Space Mono',monospace;cursor:pointer;border:1px solid var(--border);color:var(--text3);transition:all .2s;background:transparent;letter-spacing:1px}
+.ver-tab.vt-active{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:700}
+.ver-tab.vt-ok{border-color:var(--green);color:var(--green)}
+.ver-tab.vt-no{border-color:var(--red);color:var(--red)}
+
+/* COMMENT */
+.cmt-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(37,44,61,.4)}
+.cmt-item:last-child{border-bottom:none}
+.cmt-bubble{flex:1;background:var(--bg3);border:1px solid var(--border);padding:10px 13px}
+.cmt-top{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+.cmt-author{font-size:12px;font-weight:700;color:var(--text)}
+.cmt-time{font-size:10px;color:var(--text3);font-family:'Space Mono',monospace}
+.cmt-text{font-size:13px;color:var(--text2);line-height:1.6}
+
+.cmt-input-row{display:flex;gap:10px;margin-top:14px;align-items:flex-end}
+.cmt-input-row textarea{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 13px;font-family:'Noto Sans Lao',sans-serif;font-size:13px;resize:none;height:64px;outline:none;transition:border-color .2s}
+.cmt-input-row textarea:focus{border-color:var(--gold)}
+
+/* STEP BAR */
+.step-bar{display:flex;gap:5px;align-items:center;margin-bottom:18px}
+.step-seg{height:4px;flex:1;border-radius:2px;background:var(--border2);transition:background .3s}
+.step-seg.s-done{background:var(--green)}
+.step-seg.s-now{background:var(--gold)}
+.step-lbl{font-size:11px;color:var(--text3);white-space:nowrap}
+
+/* SPLIT VIEW */
+.split{display:grid;grid-template-columns:1fr 1fr;margin-bottom:16px;border:1px solid var(--border)}
+.split-pane{position:relative}
+.split-pane:first-child{border-right:1px solid var(--border)}
+.split-ph{padding:10px 14px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:10px;font-family:'Space Mono',monospace;color:var(--text3);letter-spacing:1px}
+.split-pb{padding:16px;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative}
+
+.wm-badge{position:absolute;top:8px;right:8px;font-size:9px;padding:2px 7px;background:rgba(239,68,68,.2);color:var(--red);border:1px solid rgba(239,68,68,.3);font-family:'Space Mono',monospace;letter-spacing:1px}
+.wm-final{background:rgba(34,197,94,.2)!important;color:var(--green)!important;border-color:rgba(34,197,94,.3)!important}
+
+/* FILE DROP */
+.file-drop{background:var(--bg3);border:2px dashed var(--border2);padding:24px;text-align:center;cursor:pointer;transition:border-color .2s;position:relative;min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.file-drop:hover{border-color:var(--gold)}
+.file-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.file-drop-icon{font-size:32px}
+.file-drop-name{font-size:13px;font-weight:600;color:var(--text)}
+.file-drop-sub{font-size:11px;color:var(--text3)}
+
+/* DELIVERY */
+.dlv-card{background:var(--bg2);border:1px solid var(--border);padding:18px 22px;margin-bottom:10px;display:flex;align-items:center;gap:16px}
+.dlv-icon{font-size:28px}
+.dlv-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.dlv-detail{font-size:12px;color:var(--text3)}
+.dlv-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+.link-row{background:var(--bg3);border:1px solid var(--border);padding:9px 13px;display:flex;align-items:center;gap:8px;margin-top:8px;max-width:500px}
+.link-row input{background:none;border:none;color:var(--gold);font-family:'Space Mono',monospace;font-size:11px;flex:1;outline:none;cursor:text}
+.link-copy{font-size:11px;padding:3px 10px;background:var(--border2);color:var(--text2);border:none;cursor:pointer;transition:background .2s;font-family:'Noto Sans Lao',sans-serif}
+.link-copy:hover{background:var(--gold);color:var(--bg)}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--green);padding:12px 16px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:13px;transform:translateX(130%);transition:transform .3s ease;min-width:260px;max-width:380px}
+.toast.show{transform:translateX(0)}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:44px 20px;color:var(--text3);font-size:13px}
+.empty-icon{font-size:36px;margin-bottom:12px}
+
+@media(max-width:900px){
+  #sidebar{display:none}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .g2,.g3{grid-template-columns:1fr}
+  .kanban{grid-template-columns:repeat(2,260px)}
+  .pipe{flex-wrap:wrap}
+  .pipe-step{min-width:50%}
+  .split{grid-template-columns:1fr}
+  .split-pane:first-child{border-right:none;border-bottom:1px solid var(--border)}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">LUMINA</div>
+    <div class="login-sub">MEDIA PRODUCTION · MANAGEMENT SYSTEM</div>
+    <div class="fg"><label>ຊື່ຜູ້ໃຊ້</label><input id="li-user" type="text" placeholder="username" autocomplete="off"></div>
+    <div class="fg"><label>ລະຫັດຜ່ານ</label><input id="li-pass" type="password" placeholder="••••••••"></div>
+    <button class="btn btn-gold btn-full" onclick="doLogin()">ເຂົ້າສູ່ລະບົບ</button>
+    <div class="login-err" id="loginErr"></div>
+    <div class="login-hint">ຕິດຕໍ່ Admin ຫາກລືມລະຫັດຜ່ານ</div>
+  </div>
+</div>
+
+<!-- ===== SIDEBAR ===== -->
+<div id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-brand">LUMINA</div>
+    <div class="sb-brand-sub">MANAGEMENT SYSTEM</div>
+  </div>
+  <div class="sb-user-wrap" onclick="openProfile()" title="ແກ້ໄຂ Profile">
+    <div class="sb-av" id="sbAv" style="background:rgba(240,180,41,.2);color:var(--gold);font-size:13px">A</div>
+    <div>
+      <div class="sb-name" id="sbName">Admin</div>
+      <div class="sb-role" id="sbRole">ຜູ້ດູແລລະບົບ</div>
+      <div class="sb-edit-hint">✏ ແກ້ໄຂ Profile</div>
+    </div>
+    <div class="sb-badge" id="sbBadge">ADMIN</div>
+  </div>
+
+  <div class="nav-sec">
+    <div class="nav-sec-title">ຫຼັກ</div>
+    <div class="nav-item active" data-sec="dashboard" onclick="goTo('dashboard')"><span class="nav-icon">📊</span>Dashboard</div>
+    <div class="nav-item" data-sec="projects" onclick="goTo('projects')"><span class="nav-icon">🎬</span>ໂປຣເຈັກ<span class="nav-badge" id="nb-proj">0</span></div>
+    <div class="nav-item" data-sec="tasks" onclick="goTo('tasks')"><span class="nav-icon">✅</span>ຕິດຕາມວຽກ<span class="nav-badge blue" id="nb-task">0</span></div>
+    <div class="nav-item" data-sec="review" onclick="goTo('review')"><span class="nav-icon">🎞️</span>ກວດວຽກ<span class="nav-badge" id="nb-review">0</span></div>
+    <div class="nav-item" data-sec="delivery" onclick="goTo('delivery')"><span class="nav-icon">📦</span>Final Delivery<span class="nav-badge green" id="nb-delivery">0</span></div>
+  </div>
+  <div class="nav-sec">
+    <div class="nav-sec-title">ຈັດການ</div>
+    <div class="nav-item" data-sec="employees" onclick="goTo('employees')"><span class="nav-icon">👥</span>ພະນັກງານ</div>
+    <div class="nav-item" data-sec="equipment" onclick="goTo('equipment')"><span class="nav-icon">📷</span>ອຸປະກອນ</div>
+    <div class="nav-item" data-sec="schedule" onclick="goTo('schedule')"><span class="nav-icon">📅</span>ຕາຕະລາງ</div>
+  </div>
+  <div class="nav-sec" id="adminNav">
+    <div class="nav-sec-title">Admin</div>
+    <div class="nav-item" data-sec="reports" onclick="goTo('reports')"><span class="nav-icon">📈</span>ລາຍງານ</div>
+    <div class="nav-item" data-sec="admin" onclick="goTo('admin')"><span class="nav-icon">⚙️</span>ຕັ້ງຄ່າ</div>
+  </div>
+  <div class="sb-bottom">
+    <div class="nav-item" onclick="doLogout()" style="color:var(--red)"><span class="nav-icon">🚪</span>ອອກຈາກລະບົບ</div>
+  </div>
+</div>
+
+<!-- ===== MAIN ===== -->
+<div id="main" style="display:none">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="pgTitle">Dashboard</div>
+      <div class="topbar-sub" id="pgSub">ພາບລວມຂອງບໍລິສັດ</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="clk"></div>
+      <div class="notif-btn" title="ການແຈ້ງເຕືອນ">🔔<span class="notif-dot"></span></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+  <!-- ── DASHBOARD ── -->
+  <div class="section active" id="sec-dashboard">
+    <div class="stats-row">
+      <div class="stat-card c-gold"><div class="stat-icon">🎬</div><div class="stat-label">ໂປຣເຈັກທັງໝົດ</div><div class="stat-value" id="ds-proj">0</div><div class="stat-sub" id="ds-proj-s"></div></div>
+      <div class="stat-card c-blue"><div class="stat-icon">👥</div><div class="stat-label">ພະນັກງານ</div><div class="stat-value" id="ds-emp">0</div><div class="stat-sub" id="ds-emp-s"></div></div>
+      <div class="stat-card c-green"><div class="stat-icon">✅</div><div class="stat-label">ວຽກສຳເລັດ</div><div class="stat-value" id="ds-task">0</div><div class="stat-sub" id="ds-task-s"></div></div>
+      <div class="stat-card c-purple"><div class="stat-icon">🎞️</div><div class="stat-label">ກວດວຽກລໍຖ້າ</div><div class="stat-value" id="ds-review">0</div><div class="stat-sub" id="ds-review-s"></div></div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-header"><span class="card-title">🎬 ໂປຣເຈັກກຳລັງດຳເນີນ</span><span class="card-action" onclick="goTo('projects')">ເບິ່ງທັງໝົດ →</span></div>
+        <div class="card-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>ໂປຣເຈັກ</th><th>ລູກຄ້າ</th><th>ຄວາມຄືບໜ້າ</th><th>ສະຖານະ</th></tr></thead><tbody id="ds-proj-tbl"></tbody></table></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">📋 ກິດຈະກຳລ່າສຸດ</span></div>
+        <div class="card-body" id="ds-activity"></div>
+      </div>
+    </div>
+    <div class="g3">
+      <div class="card">
+        <div class="card-header"><span class="card-title">📷 ສະຖານະອຸປະກອນ</span></div>
+        <div class="card-body" id="ds-equip-chart"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">📊 ວຽກ 7 ວັນ</span></div>
+        <div class="card-body" id="ds-week-chart"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">🎞️ ສະຖານະ Review</span></div>
+        <div class="card-body" id="ds-review-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PROJECTS ── -->
+  <div class="section" id="sec-projects">
+    <div class="sec-head">
+      <div><h2>ໂປຣເຈັກທັງໝົດ</h2><p>ຈັດການ ແລະ ຕິດຕາມໂປຣເຈັກ</p></div>
+      <button class="btn btn-gold" onclick="openM('m-proj')">+ ເພີ່ມໂປຣເຈັກ</button>
+    </div>
+    <div class="toolbar">
+      <div class="searchbox"><span>🔍</span><input placeholder="ຄົ້ນຫາ..." oninput="renderProjects(this.value,pjSF)"></div>
+      <select class="fsel" onchange="pjSF=this.value;renderProjects('',pjSF)">
+        <option value="">ທຸກສະຖານະ</option><option>ວາງແຜນ</option><option>ກຳລັງດຳເນີນ</option><option>ສຳເລັດ</option><option>ຍົກເລີກ</option>
+      </select>
+    </div>
+    <div class="card"><div class="tbl-wrap"><table><thead><tr><th>#</th><th>ຊື່ໂປຣເຈັກ</th><th>ລູກຄ້າ</th><th>ປະເພດ</th><th>ທີມ</th><th>ກຳນົດ</th><th>ຄວາມຄືບໜ້າ</th><th>ສະຖານະ</th><th>Actions</th></tr></thead><tbody id="proj-tbl"></tbody></table></div></div>
+  </div>
+
+  <!-- ── TASKS ── -->
+  <div class="section" id="sec-tasks">
+    <div class="sec-head">
+      <div><h2>ຕິດຕາມວຽກ</h2><p>Kanban Board — ຈັດການວຽກທຸກຢ່າງ</p></div>
+      <button class="btn btn-gold" onclick="openM('m-task')">+ ເພີ່ມວຽກ</button>
+    </div>
+    <div class="kanban" id="kanban"></div>
+  </div>
+
+  <!-- ── REVIEW ── -->
+  <div class="section" id="sec-review">
+    <div class="sec-head">
+      <div><h2>ກວດວຽກ</h2><p>Draft → Review & Comment → Approve → Final</p></div>
+      <button class="btn btn-gold" onclick="openM('m-upload')">+ ອັບໂຫຼດ Draft ໃໝ່</button>
+    </div>
+    <!-- Pipeline -->
+    <div class="pipe" id="rv-pipe"></div>
+    <!-- Filters -->
+    <div class="toolbar">
+      <div class="searchbox"><span>🔍</span><input placeholder="ຄົ້ນຫາ Draft..." oninput="rvSearch=this.value;renderReview()"></div>
+      <select class="fsel" onchange="rvPF=this.value;renderReview()"><option value="">ທຸກໂປຣເຈັກ</option></select>
+      <select class="fsel" onchange="rvTF=this.value;renderReview()">
+        <option value="">ທຸກປະເພດ</option><option value="video">🎬 Video</option><option value="photo">📸 Photo</option><option value="doc">📄 Document</option>
+      </select>
+      <select class="fsel" onchange="rvSF=this.value;renderReview()">
+        <option value="">ທຸກສະຖານະ</option><option value="draft">Draft</option><option value="reviewing">ກຳລັງກວດ</option><option value="approved">Approved</option><option value="final">Final</option>
+      </select>
+    </div>
+    <div id="rv-list"></div>
+  </div>
+
+  <!-- ── DELIVERY ── -->
+  <div class="section" id="sec-delivery">
+    <div class="sec-head"><div><h2>📦 Final Delivery</h2><p>ໄຟລ໌ Final ພ້ອມສົ່ງ / ລູກຄ້າດາວໂຫລດ</p></div></div>
+    <div id="dlv-list"></div>
+  </div>
+
+  <!-- ── EMPLOYEES ── -->
+  <div class="section" id="sec-employees">
+    <div class="sec-head">
+      <div><h2>ພະນັກງານ</h2><p>ຈັດການຂໍ້ມູນພະນັກງານ</p></div>
+      <button class="btn btn-gold" id="btn-addEmp" onclick="openM('m-emp')">+ ເພີ່ມພະນັກງານ</button>
+    </div>
+    <div class="toolbar">
+      <div class="searchbox"><span>🔍</span><input placeholder="ຄົ້ນຫາ..." oninput="renderEmps(this.value,empDF)"></div>
+      <select class="fsel" onchange="empDF=this.value;renderEmps('',empDF)">
+        <option value="">ທຸກພະແນກ</option><option>Photography</option><option>Video</option><option>Post-Production</option><option>Admin</option>
+      </select>
+    </div>
+    <div id="emp-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px"></div>
+  </div>
+
+  <!-- ── EQUIPMENT ── -->
+  <div class="section" id="sec-equipment">
+    <div class="sec-head">
+      <div><h2>ອຸປະກອນ</h2><p>ຕິດຕາມ ແລະ ຈັດການອຸປະກອນ</p></div>
+      <button class="btn btn-gold" onclick="openM('m-equip')">+ ເພີ່ມອຸປະກອນ</button>
+    </div>
+    <div class="toolbar">
+      <div class="searchbox"><span>🔍</span><input placeholder="ຄົ້ນຫາ..." oninput="renderEquip(this.value,eqSF,eqTF)"></div>
+      <select class="fsel" onchange="eqSF=this.value;renderEquip('',eqSF,eqTF)"><option value="">ທຸກສະຖານະ</option><option>ພ້ອມໃຊ້</option><option>ໃຊ້ຢູ່</option><option>ຊ່ອມ</option></select>
+      <select class="fsel" onchange="eqTF=this.value;renderEquip('',eqSF,eqTF)"><option value="">ທຸກປະເພດ</option><option>Camera</option><option>Lens</option><option>Lighting</option><option>Audio</option><option>Drone</option><option>Other</option></select>
+    </div>
+    <div class="card"><div class="tbl-wrap"><table><thead><tr><th>#</th><th>ຊື່ອຸປະກອນ</th><th>ປະເພດ</th><th>Serial</th><th>ຜູ້ໃຊ້ / ໃຜເອົາໄປ</th><th>ວັນທີ ເອົາໄປ</th><th>ໂປຣເຈັກ / ງານ</th><th>ສະຖານະ</th><th>Actions</th></tr></thead><tbody id="equip-tbl"></tbody></table></div></div>
+  </div>
+
+  <!-- ── SCHEDULE ── -->
+  <div class="section" id="sec-schedule">
+    <div class="sec-head">
+      <div><h2>ຕາຕະລາງວຽກ</h2><p>ຕາຕະລາງຂອງທີມງານ</p></div>
+      <button class="btn btn-gold" onclick="openM('m-sched')">+ ເພີ່ມຕາຕະລາງ</button>
+    </div>
+    <div class="card"><div class="tbl-wrap"><table><thead><tr><th>ວັນທີ</th><th>ກິດຈະກຳ</th><th>ໂປຣເຈັກ</th><th>ທີ່ຕັ້ງ</th><th>ທີມ</th><th>ເວລາ</th><th>ສະຖານະ</th><th>Actions</th></tr></thead><tbody id="sched-tbl"></tbody></table></div></div>
+  </div>
+
+  <!-- ── REPORTS ── -->
+  <div class="section" id="sec-reports">
+    <div class="sec-head"><div><h2>ລາຍງານ</h2><p>ສະຫຼຸບການດຳເນີນງານ</p></div></div>
+    <div class="stats-row">
+      <div class="stat-card c-gold"><div class="stat-icon">💰</div><div class="stat-label">ລາຍຮັບເດືອນນີ້</div><div class="stat-value">45M</div><div class="stat-sub">▲ +12% ຈາກເດືອນກ່ອນ</div></div>
+      <div class="stat-card c-blue"><div class="stat-icon">🎯</div><div class="stat-label">ໂປຣເຈັກສຳເລັດ</div><div class="stat-value" id="rp-done">0</div><div class="stat-sub">ເດືອນນີ້</div></div>
+      <div class="stat-card c-green"><div class="stat-icon">⭐</div><div class="stat-label">Final Delivery</div><div class="stat-value" id="rp-final">0</div><div class="stat-sub">ລາຍການ</div></div>
+      <div class="stat-card c-cyan"><div class="stat-icon">⬇</div><div class="stat-label">ດາວໂຫລດທັງໝົດ</div><div class="stat-value" id="rp-dl">0</div><div class="stat-sub">ຄັ້ງ</div></div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="card-header"><span class="card-title">📊 ໂປຣເຈັກລາຍເດືອນ</span></div>
+        <div class="card-body">
+          <div style="display:flex;align-items:flex-end;gap:5px;height:90px">
+            <div style="flex:1;background:rgba(240,180,41,.25);border-radius:2px 2px 0 0;height:60%"></div>
+            <div style="flex:1;background:rgba(240,180,41,.25);border-radius:2px 2px 0 0;height:80%"></div>
+            <div style="flex:1;background:rgba(240,180,41,.25);border-radius:2px 2px 0 0;height:45%"></div>
+            <div style="flex:1;background:rgba(240,180,41,.25);border-radius:2px 2px 0 0;height:90%"></div>
+            <div style="flex:1;background:rgba(240,180,41,.25);border-radius:2px 2px 0 0;height:70%"></div>
+            <div style="flex:1;background:var(--gold);border-radius:2px 2px 0 0;height:100%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px">
+            <span style="font-size:10px;color:var(--text3)">ມ.ກ</span><span style="font-size:10px;color:var(--text3)">ກ.ພ</span><span style="font-size:10px;color:var(--text3)">ມ.ນ</span><span style="font-size:10px;color:var(--text3)">ເ.ສ</span><span style="font-size:10px;color:var(--text3)">ພ.ພ</span><span style="font-size:10px;color:var(--gold)">ມ.ຖ</span>
+          </div>
+        </div>
+      </div>
+      <div class="card"><div class="card-header"><span class="card-title">🧾 ສະຫຼຸບ</span></div>
+        <div class="card-body">
+          <div class="info-row"><div class="info-key">ໂປຣເຈັກ YTD</div><div class="info-val" id="rp-ytd">-</div></div>
+          <div class="info-row"><div class="info-key">ລາຍຮັບ YTD</div><div class="info-val">₭ 235,000,000</div></div>
+          <div class="info-row"><div class="info-key">ລູກຄ້າໃໝ່</div><div class="info-val">14 ລາຍ</div></div>
+          <div class="info-row"><div class="info-key">ພະນັກງານ</div><div class="info-val" id="rp-emp">-</div></div>
+          <div class="info-row"><div class="info-key">ອຸປະກອນ</div><div class="info-val" id="rp-equip">-</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ADMIN ── -->
+  <div class="section" id="sec-admin">
+    <div class="sec-head"><div><h2>ຕັ້ງຄ່າລະບົບ</h2><p>ຈັດການຜູ້ໃຊ້ ແລະ ຂໍ້ມູນບໍລິສັດ</p></div></div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-header"><span class="card-title">👤 ຜູ້ໃຊ້ລະບົບ</span><span class="card-action" onclick="openM('m-user')">+ ເພີ່ມ</span></div>
+        <div class="card-body" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>ຊື່</th><th>Username</th><th>ສິດ</th><th>ສະຖານະ</th></tr></thead><tbody id="user-tbl"></tbody></table></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">🏢 ຂໍ້ມູນບໍລິສັດ</span></div>
+        <div class="card-body">
+          <div class="fg"><label>ຊື່ບໍລິສັດ</label><input type="text" value="LUMINA Media Production" id="co-name"></div>
+          <div class="fg"><label>ທີ່ຢູ່</label><input type="text" value="ວຽງຈັນ, ລາວ" id="co-addr"></div>
+          <div class="fg"><label>ໂທລະສັບ</label><input type="text" value="+856 20 XXXX XXXX" id="co-tel"></div>
+          <div class="fg"><label>Email</label><input type="text" value="lumina@email.com" id="co-email"></div>
+          <button class="btn btn-gold" onclick="toast('ບັນທຶກຂໍ້ມູນສຳເລັດ ✓')">💾 ບັນທຶກ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ===== MODALS ===== -->
+
+<!-- Project -->
+<div class="modal-bg" id="m-proj">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title">🎬 ເພີ່ມ / ແກ້ໄຂ ໂປຣເຈັກ</span><span class="modal-close" onclick="closeM('m-proj')">✕</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="pj-id">
+      <div class="fg"><label>ຊື່ໂປຣເຈັກ *</label><input id="pj-name" placeholder="TVC / Corporate Film..."></div>
+      <div class="fg"><label>ລູກຄ້າ *</label><input id="pj-client" placeholder="ຊື່ລູກຄ້າ / ບໍລິສັດ"></div>
+      <div class="fg"><label>ປະເພດ</label><select id="pj-type"><option>TVC</option><option>Corporate Film</option><option>Photography</option><option>Documentary</option><option>Drone</option><option>Live Stream</option><option>Other</option></select></div>
+      <div class="fg"><label>ກຳນົດສົ່ງ</label><input id="pj-dead" type="date"></div>
+      <div class="fg"><label>ສະຖານະ</label><select id="pj-stat"><option>ວາງແຜນ</option><option>ກຳລັງດຳເນີນ</option><option>ສຳເລັດ</option><option>ຍົກເລີກ</option></select></div>
+      <div class="fg"><label>ທີມງານ</label><input id="pj-team" placeholder="ຊື່ (ຄັ່ນດ້ວຍ ,)"></div>
+      <div class="fg"><label>ຄວາມຄືບໜ້າ (%)</label><input id="pj-prog" type="number" min="0" max="100" value="0"></div>
+      <div class="fg"><label>ໝາຍເຫດ</label><textarea id="pj-note" placeholder="ລາຍລະອຽດ..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeM('m-proj')">ຍົກເລີກ</button>
+      <button class="btn btn-gold" onclick="saveProject()">💾 ບັນທຶກ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task -->
+<div class="modal-bg" id="m-task">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title">✅ ເພີ່ມ / ແກ້ໄຂ ວຽກ</span><span class="modal-close" onclick="closeM('m-task')">✕</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="tk-id">
+      <div class="fg"><label>ຊື່ວຽກ *</label><input id="tk-name" placeholder="ລາຍລະອຽດວຽກ..."></div>
+      <div class="fg"><label>ໂປຣເຈັກ</label><select id="tk-proj"></select></div>
+      <div class="fg"><label>ຜູ້ຮັບຜິດຊອບ</label><select id="tk-assign"></select></div>
+      <div class="fg"><label>ຄວາມສຳຄັນ</label><select id="tk-pri"><option value="ດ່ວນ">🔴 ດ່ວນ</option><option value="ປານກາງ" selected>🟡 ປານກາງ</option><option value="ທຳມະດາ">🟢 ທຳມະດາ</option></select></div>
+      <div class="fg"><label>ກຳນົດເສັດ</label><input id="tk-due" type="date"></div>
+      <div class="fg"><label>ສະຖານະ</label><select id="tk-stat"><option value="todo">ລໍຖ້າ</option><option value="doing">ດຳເນີນການ</option><option value="review">ກວດສອບ</option><option value="done">ສຳເລັດ</option></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeM('m-task')">ຍົກເລີກ</button>
+      <button class="btn btn-gold" onclick="saveTask()">💾 ບັນທຶກ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Employee -->
+<div class="modal-bg" id="m-emp">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title">👤 ເພີ່ມ / ແກ້ໄຂ ພະນັກງານ</span><span class="modal-close" onclick="closeM('m-emp')">✕</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="em-id">
+      <div class="fg"><label>ຊື່-ນາມສະກຸນ *</label><input id="em-name"></div>
+      <div class="fg"><label>ຕຳແໜ່ງ</label><input id="em-pos" placeholder="Photographer, Editor..."></div>
+      <div class="fg"><label>ພະແນກ</label><select id="em-dept"><option>Photography</option><option>Video</option><option>Post-Production</option><option>Admin</option></select></div>
+      <div class="fg"><label>ໂທລະສັບ</label><input id="em-tel" placeholder="+856 20..."></div>
+      <div class="fg"><label>Email</label><input id="em-email" type="email"></div>
+      <div class="fg"><label>ສະຖານະ</label><select id="em-stat"><option>Active</option><option>Inactive</option></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeM('m-emp')">ຍົກເລີກ</button>
+      <button class="btn btn-gold" onclick="saveEmp()">💾 ບັນທຶກ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Equipment -->
+<div class="modal-bg" id="m-equip">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title">📷 ເພີ່ມ / ແກ້ໄຂ ອຸປະກອນ</span><span class="modal-close" onclick="closeM('m-equip')">✕</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="eq-id">
+      <div class="fg"><label>ຊື່ອຸປະກອນ *</label><input id="eq-name"></div>
+      <div class="fg"><label>ປະເພດ</label><select id="eq-type"><option>Camera</option><option>Lens</option><option>Lighting</option><option>Audio</option><option>Drone</option><option>Other</option></select></div>
+      <div class="fg"><label>Serial Number</label><input id="eq-serial"></div>
+      <div class="fg"><label>ຜູ້ຮັບຜິດຊອບ</label><select id="eq-owner"></select></div>
+      <div class="fg"><label>ໂປຣເຈັກ</label><select id="eq-proj"><option value="-">ບໍ່ໄດ້ໃຊ້ງານ</option></select></div>
+      <div class="fg"><label>ສະຖານະ</label><select id="eq-stat"><option>ພ້ອມໃຊ້</option><option>ໃຊ້ຢູ່</option><option>ຊ່ອມ</option></select></div>
+      <div class="fg"><label>ໝາຍເຫດ</label><textarea id="eq-note"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeM('m-equip')">ຍົກເລີກ</button>
+      <button class="btn btn-gold" onclick="saveEquip()">💾 ບັນທຶກ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule -->
+<div class="modal-bg" id="m-sched">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title">📅 ເພີ່ມຕາຕະລາງ</span><span class="modal-close" onclick="closeM('m-sched')">✕</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="sc-id">
+      <div class="fg"><label>ກິດຈະກຳ *</label><input id="sc-name" placeholder="ຖ່າຍ Location / ນັດລູກຄ້າ..."></div>
+      <div class="fg"><label>ໂປຣເຈັກ</label><select id="sc-proj"></select></div>
+      <div class="fg"><label>ວັນທີ *</label><input id="sc-date" type="date"></div>
+      <div class="fg"><label>ເວລາ</label><input id="sc-time" placeholder="09:00 - 17:00"></div>
+      <div class="fg"><label>ທີ່ຕັ້ງ</label><input id="sc-loc" placeholder="ສະຖານທີ່..."></div>
+      <div class="fg"><label>ທີມ</label><input id="sc-team" placeholder="ຊື່ (ຄັ່ນດ້ວຍ ,)"></div>
+      <div class="fg"><label>ໝາຍເຫດ</label><textarea id="sc-note"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeM('m-sched')">ຍົກເລີກ</button>
+      <button class="btn btn-gold" onclick="saveSched()">💾 ບັນທຶກ</button>
+    </div>
+  </div>
+</div>
+
+<!-- User -->
+<div class="modal-bg" id="m-user">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title">👤 ເພີ່ມຜູ້ໃຊ້ລະບົບ</span><span class="modal-close" onclick="closeM('m-user')">✕</span></div>
+    <div class="modal-body">
+      <div class="fg"><label>ຊື່ *</label><input id="us-name"></div>
+      <div class="fg"><label>Username *</label><input id="us-uname"></div>
+      <div class="fg"><label>ລະຫັດຜ່ານ *</label><input id="us-pass" type="password"></div>
+      <div class="fg"><label>ສິດ</label><select id="us-role"><option value="admin">Admin</option><option value="staff">Staff</option></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeM('m-user')">ຍົກເລີກ</button>
+      <button class="btn btn-gold" onclick="saveUser()">💾 ບັນທຶກ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Upload Draft -->
+<div class="modal-bg" id="m-upload">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title">📤 ອັບໂຫຼດ Draft ໃໝ່</span><span class="modal-close" onclick="closeM('m-upload')">✕</span></div>
+    <div class="modal-body">
+      <div class="fg"><label>ຊື່ Draft *</label><input id="up-title" placeholder="ເຊັ່ນ: TVC Pho Lao - Draft 1"></div>
+      <div class="fg"><label>ໂປຣເຈັກ</label><select id="up-proj"></select></div>
+      <div class="fg"><label>ປະເພດໄຟລ໌</label>
+        <select id="up-type"><option value="video">🎬 Video (MP4, MOV)</option><option value="photo">📸 Photo / ZIP</option><option value="doc">📄 Document / PDF</option></select>
+      </div>
+      <div class="fg"><label>Version</label>
+        <select id="up-ver"><option>Draft 1</option><option>Draft 2</option><option>Draft 3</option><option>Draft 4</option><option>Final</option></select>
+      </div>
+      <div class="fg"><label>ໄຟລ໌</label>
+        <div class="file-drop" id="up-drop">
+          <input type="file" onchange="previewFile(this)" accept="video/*,image/*,.pdf,.zip">
+          <div class="file-drop-icon" id="up-icon">📁</div>
+          <div class="file-drop-name" id="up-fname">ຄລິກ ຫຼື ລາກໄຟລ໌ໃສ່ນີ້</div>
+          <div class="file-drop-sub" id="up-fsize">MP4, MOV, JPG, PNG, PDF, ZIP</div>
+        </div>
+      </div>
+      <div class="fg"><label>ຜູ້ກວດ (Reviewer)</label><select id="up-reviewer"></select></div>
+      <div class="fg"><label>ໝາຍເຫດ</label><textarea id="up-note" placeholder="ລາຍລະອຽດ Draft..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeM('m-upload')">ຍົກເລີກ</button>
+      <button class="btn btn-gold" onclick="submitDraft()">📤 ອັບໂຫຼດ & ສົ່ງກວດ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Review Detail -->
+<div class="modal-bg" id="m-rv-detail">
+  <div class="modal modal-wide">
+    <div class="modal-hdr">
+      <div><span class="modal-title" id="rvd-title">ກວດ Draft</span><div style="font-size:11px;color:var(--text3);margin-top:3px" id="rvd-sub"></div></div>
+      <span class="modal-close" onclick="closeM('m-rv-detail')">✕</span>
+    </div>
+    <div class="modal-body">
+      <div class="step-bar" id="rvd-steps"></div>
+      <div class="split">
+        <div class="split-pane">
+          <div class="split-ph">PREVIEW</div>
+          <div class="split-pb">
+            <div style="font-size:52px" id="rvd-icon">🎬</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);text-align:center" id="rvd-fname"></div>
+            <div style="font-size:11px;color:var(--text3)" id="rvd-fsize"></div>
+            <div class="wm-badge" id="rvd-wm">DRAFT</div>
+          </div>
+        </div>
+        <div class="split-pane">
+          <div class="split-ph">ຂໍ້ມູນ</div>
+          <div class="split-pb" style="align-items:stretch;justify-content:flex-start;padding:14px">
+            <div id="rvd-info"></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:10px;color:var(--text3);letter-spacing:1px;margin-bottom:7px">VERSIONS</div>
+        <div class="ver-tabs" id="rvd-vers"></div>
+      </div>
+      <div style="font-size:10px;color:var(--text3);letter-spacing:1px;margin-bottom:10px">COMMENTS & FEEDBACK</div>
+      <div id="rvd-cmts"></div>
+      <div class="cmt-input-row" id="rvd-cmt-input">
+        <div class="av" id="rvd-my-av" style="width:30px;height:30px;font-size:12px;background:rgba(240,180,41,.2);color:var(--gold)">A</div>
+        <div style="flex:1">
+          <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+            <select id="rvd-cmt-type" class="fsel" style="font-size:11px;padding:5px 10px">
+              <option value="general">💬 ຄຳເຫັນ</option>
+              <option value="revision">✏️ ຂໍແກ້ໄຂ</option>
+              <option value="approve">✅ ອະນຸມັດ</option>
+              <option value="reject">❌ ປະຕິເສດ</option>
+            </select>
+          </div>
+          <textarea id="rvd-cmt-txt" placeholder="ໃສ່ຄຳເຫັນ..."></textarea>
+        </div>
+        <button class="btn btn-gold" onclick="submitComment()">ສົ່ງ</button>
+      </div>
+    </div>
+    <div class="modal-footer" id="rvd-footer"></div>
+  </div>
+</div>
+
+<!-- Client Download -->
+<div class="modal-bg" id="m-client">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title">🔗 ລິ້ງດາວໂຫລດລູກຄ້າ</span><span class="modal-close" onclick="closeM('m-client')">✕</span></div>
+    <div class="modal-body">
+      <div style="text-align:center;padding:20px 0 14px">
+        <div style="font-size:44px;margin-bottom:10px">📦</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:4px" id="cl-title"></div>
+        <div style="font-size:12px;color:var(--text3)" id="cl-sub"></div>
+      </div>
+      <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);padding:14px 18px;margin-bottom:14px">
+        <div style="font-size:10px;color:var(--green);margin-bottom:8px;font-family:'Space Mono',monospace;letter-spacing:1px">✓ FINAL APPROVED — ລູກຄ້າດາວໂຫລດໄດ້</div>
+        <div id="cl-info"></div>
+      </div>
+      <div style="font-size:10px;color:var(--text3);letter-spacing:1px;margin-bottom:7px">DOWNLOAD LINK</div>
+      <div class="link-row">
+        <span>🔗</span>
+        <input id="cl-link" readonly onclick="this.select()">
+        <button class="link-copy" onclick="copyLink()">Copy</button>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <button class="btn btn-success btn-full" onclick="simDownload()">⬇ ຈຳລອງ Download (ລູກຄ້າ)</button>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text3);text-align:center" id="cl-exp"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeM('m-client')">ປິດ</button></div>
+  </div>
+</div>
+
+<!-- Take Equipment Modal (Staff) -->
+<div class="modal-bg" id="m-take-equip">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">📦 ເອົາອຸປະກອນໄປໃຊ້</span>
+      <span class="modal-close" onclick="document.getElementById('m-take-equip').classList.remove('open')">✕</span>
+    </div>
+    <div class="modal-body">
+      <div style="background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.2);padding:14px 16px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
+        <span style="font-size:28px">📷</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--gold)" id="take-eq-name">ຊື່ອຸປະກອນ</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">ຊື່ຜູ້ໃຊ້ຈະຖືກລົງທະບຽນອັດຕະໂນມັດ</div>
+        </div>
+      </div>
+      <input type="hidden" id="take-eq-id">
+      <!-- ຊື່ຜູ້ໃຊ້ — fixed ເປັນ login user ສະເໝີ -->
+      <div class="fg">
+        <label>ຜູ້ເອົາໄປໃຊ້</label>
+        <div style="background:var(--bg3);border:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px">
+          <div class="av" id="take-av" style="width:28px;height:28px;font-size:12px;background:rgba(240,180,41,.2);color:var(--gold)">A</div>
+          <span id="take-eq-user" style="font-weight:700;color:var(--gold)">—</span>
+          <span style="font-size:10px;color:var(--text3);margin-left:auto">🔒 ຕົວເຈົ້າເອງເທົ່ານັ້ນ</span>
+        </div>
+      </div>
+      <div class="fg">
+        <label>ວັນທີ ເອົາໄປໃຊ້ *</label>
+        <input id="take-eq-date" type="date">
+      </div>
+      <div class="fg">
+        <label>ໂປຣເຈັກ / ງານ</label>
+        <select id="take-eq-proj"></select>
+      </div>
+      <div class="fg">
+        <label>ໝາຍເຫດ</label>
+        <textarea id="take-eq-note" placeholder="ລາຍລະອຽດ ຫຼື ສະຖານທີ່ໃຊ້..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="document.getElementById('m-take-equip').classList.remove('open')">ຍົກເລີກ</button>
+      <button class="btn btn-gold" onclick="confirmTakeEquip()">📦 ຢືນຢັນ ເອົາໄປໃຊ້</button>
+    </div>
+  </div>
+</div>
+
+<!-- Profile Modal -->
+<div class="modal-bg" id="m-profile">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title">👤 ແກ້ໄຂ Profile</span><span class="modal-close" onclick="closeM('m-profile')">✕</span></div>
+    <div class="modal-body">
+      <!-- Avatar -->
+      <div style="text-align:center;margin-bottom:22px">
+        <div class="profile-av-big" id="pf-av-disp" style="background:rgba(240,180,41,.2);color:var(--gold)">A</div>
+        <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:4px">@<span id="pf-uname">admin</span></div>
+        <span class="badge bg-gold" id="pf-role-badge">ADMIN</span>
+      </div>
+      <div class="fg"><label>ຊື່-ນາມສະກຸນ *</label><input id="pf-name" placeholder="ຊື່ຂອງເຈົ້າ"></div>
+      <div style="background:var(--bg3);border:1px solid var(--border);padding:14px 16px;margin-bottom:16px">
+        <div style="font-size:10px;color:var(--text3);letter-spacing:1px;margin-bottom:10px">ປ່ຽນລະຫັດຜ່ານ (ຖ້າຕ້ອງການ)</div>
+        <div class="fg" style="margin-bottom:12px"><label>ລະຫັດຜ່ານໃໝ່</label><input id="pf-pass" type="password" placeholder="ໃສ່ໃໝ່ (ຫວ່າງ = ບໍ່ປ່ຽນ)"></div>
+        <div class="fg" style="margin-bottom:0"><label>ຢືນຢັນລະຫັດຜ່ານ</label><input id="pf-pass2" type="password" placeholder="ໃສ່ຊ້ຳ..."></div>
+      </div>
+      <div id="pf-msg" style="min-height:18px;font-size:12px;text-align:center;margin-bottom:4px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeM('m-profile')">ຍົກເລີກ</button>
+      <button class="btn btn-gold" onclick="saveProfile()">💾 ບັນທຶກ Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="tst"><span id="tst-icon">✓</span><span id="tst-msg">ສຳເລັດ</span></div>
+
+<script>
+// ===================================================================
+// STATE — ຂໍ້ມູນທັງໝົດ
+// ===================================================================
+const S = {
+  me: null,
+  users: [
+    {id:1,name:'Administrator',uname:'admin',pass:'admin1234',role:'admin',status:'Active'},
+  ],
+  projects: [],
+  tasks: [],
+  employees: [],
+  equipment: [],
+  schedules: [],
+  reviews: [],
+  activities: [],
+};
+
+// ===================================================================
+// HELPERS
+// ===================================================================
+const COLORS=['#f0b429','#3b82f6','#22c55e','#ef4444','#a855f7','#06b6d4','#f97316'];
+const BGS=['rgba(240,180,41,.18)','rgba(59,130,246,.18)','rgba(34,197,94,.18)','rgba(239,68,68,.18)','rgba(168,85,247,.18)','rgba(6,182,212,.18)'];
+const TI={video:'🎬',photo:'📸',doc:'📄'};
+const SM={draft:{l:'ລໍຖ້າ',c:'bg-gold'},reviewing:{l:'ກຳລັງກວດ',c:'bg-blue'},approved:{l:'Approved ✓',c:'bg-green'},final:{l:'Final ✅',c:'bg-purple'}};
+const CTYPE={general:{l:'ຄຳເຫັນ',c:'bg-gray'},revision:{l:'ຂໍແກ້ໄຂ',c:'bg-orange'},approve:{l:'ອະນຸມັດ',c:'bg-green'},reject:{l:'ປະຕິເສດ',c:'bg-red'}};
+const PRIC={ດ່ວນ:'#ef4444',ປານກາງ:'#f0b429',ທຳມະດາ:'#22c55e'};
+const KB_COLS=[{k:'todo',l:'ລໍຖ້າ',col:'#4a5568'},{k:'doing',l:'ດຳເນີນການ',col:'#3b82f6'},{k:'review',l:'ກວດສອບ',col:'#f0b429'},{k:'done',l:'ສຳເລັດ',col:'#22c55e'}];
+const PG={dashboard:{t:'Dashboard',s:'ພາບລວມຂອງບໍລິສັດ'},projects:{t:'ໂປຣເຈັກ',s:'ຈັດການ ແລະ ຕິດຕາມ'},tasks:{t:'ຕິດຕາມວຽກ',s:'Kanban Board'},review:{t:'ກວດວຽກ',s:'Draft → Review → Approve → Final'},delivery:{t:'Final Delivery',s:'ໄຟລ໌ Final ພ້ອມສົ່ງລູກຄ້າ'},employees:{t:'ພະນັກງານ',s:'ຈັດການຂໍ້ມູນ'},equipment:{t:'ອຸປະກອນ',s:'ຕິດຕາມ ແລະ ຈັດການ'},schedule:{t:'ຕາຕະລາງ',s:'ຕາຕະລາງທີມ'},reports:{t:'ລາຍງານ',s:'ສະຫຼຸບການດຳເນີນງານ'},admin:{t:'ຕັ້ງຄ່າ',s:'Admin Settings'}};
+
+function uid(){return Date.now()+Math.floor(Math.random()*1000)}
+function now(){return new Date().toLocaleDateString('lo-LA')+' '+new Date().toLocaleTimeString('lo-LA',{hour:'2-digit',minute:'2-digit'})}
+function today(){return new Date().toLocaleDateString('en-CA')}
+function isLate(d){return d&&d!=='-'&&new Date(d)<new Date()}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function rnd(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+function log(txt,col='#f0b429'){S.activities.unshift({text:txt,time:'ຫາກໍ',col});renderDash()}
+
+let pjSF='',empDF='',eqSF='',eqTF='',rvSearch='',rvPF='',rvTF='',rvSF='',curRV=null;
+
+// ===================================================================
+// AUTH
+// ===================================================================
+function doLogin(){
+  const u=document.getElementById('li-user').value.trim();
+  const p=document.getElementById('li-pass').value;
+  const user=S.users.find(x=>x.uname===u&&x.pass===p&&x.status==='Active');
+  if(!user){document.getElementById('loginErr').textContent='ຊື່ຜູ້ໃຊ້ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກ';return}
+  S.me=user;
+  document.getElementById('loginErr').textContent='';
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('main').style.display='flex';
+  document.getElementById('sbAv').textContent=user.name.charAt(0);
+  document.getElementById('sbName').textContent=user.name;
+  document.getElementById('sbRole').textContent=user.role==='admin'?'ຜູ້ດູແລລະບົບ':'ພະນັກງານ';
+  document.getElementById('sbBadge').textContent=user.role.toUpperCase();
+  if(user.role!=='admin'){
+    document.getElementById('adminNav').style.display='none';
+    const b=document.getElementById('btn-addEmp');if(b)b.style.display='none';
+  }
+  initApp();
+  toast('ຍິນດີຕ້ອນຮັບ '+user.name+' ✓');
+}
+document.getElementById('li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+document.getElementById('li-user').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('li-pass').focus()});
+
+function doLogout(){
+  S.me=null;
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('main').style.display='none';
+  document.getElementById('li-user').value='admin';
+  document.getElementById('li-pass').value='1234';
+  document.getElementById('loginErr').textContent='';
+}
+
+// ===================================================================
+// NAV
+// ===================================================================
+function goTo(name){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const sec=document.getElementById('sec-'+name);
+  if(sec)sec.classList.add('active');
+  document.querySelectorAll('.nav-item[data-sec="'+name+'"]').forEach(n=>n.classList.add('active'));
+  const pg=PG[name]||{t:name,s:''};
+  document.getElementById('pgTitle').textContent=pg.t;
+  document.getElementById('pgSub').textContent=pg.s;
+  const renders={projects:renderProjects,tasks:renderKanban,review:renderReview,delivery:renderDelivery,employees:renderEmps,equipment:renderEquip,schedule:renderSched,reports:renderReports,admin:renderAdmin,dashboard:renderDash};
+  if(renders[name])renders[name]();
+}
+
+// ===================================================================
+// INIT
+// ===================================================================
+function initApp(){
+  setInterval(()=>{document.getElementById('clk').textContent=new Date().toLocaleTimeString('lo-LA')},1000);
+  goTo('dashboard');
+}
+
+// ===================================================================
+// DASHBOARD
+// ===================================================================
+function renderDash(){
+  const active=S.projects.filter(p=>p.stat==='ກຳລັງດຳເນີນ').length;
+  const done=S.tasks.filter(t=>t.stat==='done').length;
+  const pending=S.reviews.filter(r=>r.stat==='draft'||r.stat==='reviewing').length;
+  document.getElementById('ds-proj').textContent=S.projects.length;
+  document.getElementById('ds-proj-s').textContent='● '+active+' ກຳລັງດຳເນີນ';
+  document.getElementById('ds-emp').textContent=S.employees.length;
+  document.getElementById('ds-emp-s').textContent='● '+S.employees.filter(e=>e.stat==='Active').length+' Active';
+  document.getElementById('ds-task').textContent=done;
+  document.getElementById('ds-task-s').textContent='● '+S.tasks.filter(t=>t.stat!=='done').length+' ຍັງຄ້າງ';
+  document.getElementById('ds-review').textContent=pending;
+  document.getElementById('ds-review-s').textContent=pending>0?'⚠ ລໍຖ້າກວດ':'● ບໍ່ມີຄ້າງ';
+  updateBadges();
+
+  // Project table
+  document.getElementById('ds-proj-tbl').innerHTML=S.projects.filter(p=>p.stat!=='ສຳເລັດ').slice(0,5).map(p=>`
+    <tr><td class="td-main">${esc(p.name)}</td><td>${esc(p.client)}</td>
+    <td style="min-width:110px"><div style="font-size:10px;color:var(--text3)">${p.prog}%</div><div class="prog"><div class="prog-fill" style="width:${p.prog}%;background:${p.prog>=100?'var(--green)':p.prog>50?'var(--gold)':'var(--blue)'}"></div></div></td>
+    <td>${statBadge(p.stat)}</td></tr>`).join('');
+
+  // Activity
+  document.getElementById('ds-activity').innerHTML=S.activities.slice(0,6).map(a=>`
+    <div class="act-item"><div class="act-dot" style="background:${a.col}"></div>
+    <div><div class="act-text">${esc(a.text)}</div><div class="act-time">${a.time}</div></div></div>`).join('');
+
+  // Equip chart
+  const eq_ok=S.equipment.filter(e=>e.stat==='ພ້ອມໃຊ້').length;
+  const eq_in=S.equipment.filter(e=>e.stat==='ໃຊ້ຢູ່').length;
+  const eq_fix=S.equipment.filter(e=>e.stat==='ຊ່ອມ').length;
+  const tot=S.equipment.length||1;
+  const p1=eq_ok/tot*100,p2=(eq_ok+eq_in)/tot*100;
+  document.getElementById('ds-equip-chart').innerHTML=`
+    <div class="donut-wrap">
+      <div class="donut" style="background:conic-gradient(var(--green) 0% ${p1}%,var(--gold) ${p1}% ${p2}%,var(--red) ${p2}% 100%)"></div>
+      <div class="leg">
+        <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>ພ້ອມໃຊ້ (${eq_ok})</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--gold)"></div>ໃຊ້ຢູ່ (${eq_in})</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>ຊ່ອມ (${eq_fix})</div>
+      </div>
+    </div>`;
+
+  // Week chart
+  const vals=[3,5,2,7,4,6,8];const mx=Math.max(...vals);
+  document.getElementById('ds-week-chart').innerHTML=`
+    <div class="mini-chart">${vals.map((v,i)=>`<div class="mini-bar ${i===6?'hi':''}" style="height:${v/mx*100}%" title="${v} ວຽກ"></div>`).join('')}</div>
+    <div style="display:flex;justify-content:space-between;margin-top:6px">
+      ${['ຈ','ອ','ພ','ພຫ','ສ','ເສ','ອາ'].map((d,i)=>`<span style="font-size:10px;color:${i===6?'var(--gold)':'var(--text3)'}">${d}</span>`).join('')}
+    </div>`;
+
+  // Review chart
+  const rv_d=S.reviews.filter(r=>r.stat==='draft').length;
+  const rv_r=S.reviews.filter(r=>r.stat==='reviewing').length;
+  const rv_a=S.reviews.filter(r=>r.stat==='approved').length;
+  const rv_f=S.reviews.filter(r=>r.stat==='final').length;
+  document.getElementById('ds-review-chart').innerHTML=`
+    <div class="leg" style="gap:10px">
+      <div class="leg-item" style="cursor:pointer" onclick="goTo('review')"><div class="leg-dot" style="background:var(--gold)"></div>Draft ລໍຖ້າ: <b style="color:var(--gold)">${rv_d}</b></div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>ກຳລັງກວດ: <b style="color:var(--blue)">${rv_r}</b></div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Approved: <b style="color:var(--green)">${rv_a}</b></div>
+      <div class="leg-item" style="cursor:pointer" onclick="goTo('delivery')"><div class="leg-dot" style="background:var(--purple)"></div>Final: <b style="color:var(--purple)">${rv_f}</b></div>
+    </div>
+    <div style="margin-top:14px"><button class="btn btn-gold btn-sm" onclick="goTo('review')" style="width:100%">→ ໄປໜ້າກວດວຽກ</button></div>`;
+}
+
+function updateBadges(){
+  document.getElementById('nb-proj').textContent=S.projects.filter(p=>p.stat==='ກຳລັງດຳເນີນ').length;
+  document.getElementById('nb-task').textContent=S.tasks.filter(t=>t.stat!=='done').length;
+  document.getElementById('nb-review').textContent=S.reviews.filter(r=>r.stat==='draft'||r.stat==='reviewing').length;
+  document.getElementById('nb-delivery').textContent=S.reviews.filter(r=>r.stat==='final').length;
+}
+
+// ===================================================================
+// PROJECTS
+// ===================================================================
+function renderProjects(search='',sf=''){
+  const isAdmin=S.me&&S.me.role==='admin';
+  const addBtn=document.querySelector('#sec-projects .sec-head .btn-gold');
+  if(addBtn)addBtn.style.display=isAdmin?'':'none';
+  let list=S.projects;
+  if(search)list=list.filter(p=>p.name.includes(search)||p.client.includes(search));
+  if(sf)list=list.filter(p=>p.stat===sf);
+  document.getElementById('proj-tbl').innerHTML=list.length?list.map((p,i)=>`
+    <tr>
+      <td class="td-mono">${String(i+1).padStart(2,'0')}</td>
+      <td class="td-main">${esc(p.name)}</td>
+      <td>${esc(p.client)}</td>
+      <td><span class="badge bg-cyan">${p.type}</span></td>
+      <td style="font-size:12px;color:var(--text3)">${esc(p.team)}</td>
+      <td class="td-mono" style="color:${isLate(p.dead)?'var(--red)':'var(--text3)'}">${p.dead||'-'}</td>
+      <td style="min-width:110px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="prog" style="flex:1"><div class="prog-fill" style="width:${p.prog}%;background:${p.prog>=100?'var(--green)':p.prog>50?'var(--gold)':'var(--blue)'}"></div></div>
+          <span class="td-mono">${p.prog}%</span>
+        </div>
+      </td>
+      <td>${statBadge(p.stat)}</td>
+      <td><div style="display:flex;gap:5px">
+        ${isAdmin?`
+          <button class="btn btn-outline btn-xs" onclick="editProject(${p.id})">✏️ ແກ້ໄຂ</button>
+          <button class="btn btn-xs" style="background:var(--border2);color:var(--text2)" onclick="quickProg(${p.id})">% ອັບເດດ</button>
+          <button class="btn btn-danger btn-xs" onclick="delProject(${p.id})">🗑</button>
+        `:`<span style="font-size:11px;color:var(--text3)">— ດູເທົ່ານັ້ນ —</span>`}
+      </div></td>
+    </tr>`).join(''):`<tr><td colspan="9"><div class="empty"><div class="empty-icon">🎬</div>ບໍ່ພົບໂປຣເຈັກ</div></td></tr>`;
+}
+
+function saveProject(){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເພີ່ມ/ແກ້ໄຂໂປຣເຈັກໄດ້','e');return}
+  const id=document.getElementById('pj-id').value;
+  const n=document.getElementById('pj-name').value.trim();
+  if(!n){toast('ກະລຸນາໃສ່ຊື່ໂປຣເຈັກ','e');return}
+  const obj={name:n,client:document.getElementById('pj-client').value||'-',type:document.getElementById('pj-type').value,dead:document.getElementById('pj-dead').value||'-',stat:document.getElementById('pj-stat').value,team:document.getElementById('pj-team').value||'-',prog:parseInt(document.getElementById('pj-prog').value)||0,note:document.getElementById('pj-note').value};
+  if(id){const p=S.projects.find(x=>x.id==id);if(p)Object.assign(p,obj);log('ແກ້ໄຂໂປຣເຈັກ: '+n)}
+  else{obj.id=uid();S.projects.push(obj);log('ເພີ່ມໂປຣເຈັກ: '+n,'#06b6d4')}
+  closeM('m-proj');renderProjects(pjSF);toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ສຳເລັດ ✓');
+}
+
+function editProject(id){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ແກ້ໄຂໂປຣເຈັກໄດ້','e');return}
+  const p=S.projects.find(x=>x.id===id);if(!p)return;
+  document.getElementById('pj-id').value=id;
+  document.getElementById('pj-name').value=p.name;
+  document.getElementById('pj-client').value=p.client;
+  document.getElementById('pj-type').value=p.type;
+  document.getElementById('pj-dead').value=p.dead==='-'?'':p.dead;
+  document.getElementById('pj-stat').value=p.stat;
+  document.getElementById('pj-team').value=p.team;
+  document.getElementById('pj-prog').value=p.prog;
+  document.getElementById('pj-note').value=p.note;
+  openM('m-proj');
+}
+
+function quickProg(id){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເຮັດໄດ້','e');return}
+  const p=S.projects.find(x=>x.id===id);if(!p)return;
+  const v=prompt('ຄວາມຄືບໜ້າ "'+p.name+'" (0-100):',p.prog);
+  if(v===null)return;
+  p.prog=Math.min(100,Math.max(0,parseInt(v)||0));
+  if(p.prog===100)p.stat='ສຳເລັດ';
+  renderProjects(pjSF);renderDash();toast('ອັບເດດ '+p.prog+'%');
+}
+
+function delProject(id){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ລົບໄດ້','e');return}
+  if(!confirm('ລົບໂປຣເຈັກນີ້?'))return;
+  S.projects=S.projects.filter(x=>x.id!==id);
+  renderProjects();renderDash();toast('ລົບສຳເລັດ');
+}
+
+// ===================================================================
+// TASKS / KANBAN
+// ===================================================================
+function renderKanban(){
+  const isAdmin=S.me&&S.me.role==='admin';
+  // Staff can ONLY update progress on their own tasks - no move, no delete, no add
+  const addBtn=document.querySelector('#sec-tasks .btn-gold');
+  if(addBtn)addBtn.style.display=isAdmin?'':'none';
+
+  document.getElementById('kanban').innerHTML=KB_COLS.map(col=>{
+    const tasks=S.tasks.filter(t=>t.stat===col.k);
+    return`<div class="kb-col">
+      <div class="kb-hdr"><div class="kb-hdr-dot" style="background:${col.col}"></div><span class="kb-title" style="color:${col.col}">${col.l}</span><span class="kb-count">${tasks.length}</span></div>
+      <div class="kb-body">${tasks.length?tasks.map(t=>{
+        const isMyTask=S.me&&t.assign===S.me.name;
+        return`
+        <div class="task-card" style="border-left-color:${PRIC[t.pri]||'#888'};${!isAdmin&&!isMyTask?'opacity:.6':''}">
+          <div class="task-title">${esc(t.name)}${isMyTask&&!isAdmin?` <span class="perm-badge" style="background:rgba(240,180,41,.15);color:var(--gold);border-color:rgba(240,180,41,.3)">ວຽກຂອງຂ້ອຍ</span>`:''}</div>
+          <div class="task-proj">📁 ${esc(t.proj)}</div>
+          <div class="task-meta">
+            <span class="badge ${t.pri==='ດ່ວນ'?'bg-red':t.pri==='ປານກາງ'?'bg-gold':'bg-green'}" style="font-size:9px">${t.pri}</span>
+            <span style="font-size:11px;color:${isMyTask?'var(--gold)':'var(--text3)'}">👤 ${esc(t.assign)}</span>
+            <span class="task-due ${isLate(t.due)?'late':''}">📅${t.due||'-'}</span>
+          </div>
+          ${isAdmin?`
+          <div class="task-actions">
+            ${KB_COLS.filter(c=>c.k!==col.k).map(c=>`<button class="btn btn-outline btn-xs" onclick="moveTask(${t.id},'${c.k}')">${c.l==='ສຳເລັດ'?'✓':c.l.substring(0,2)}</button>`).join('')}
+            <button class="btn btn-xs" style="background:var(--border2);color:var(--text2);margin-left:auto" onclick="editTask(${t.id})">✏️</button>
+            <button class="btn btn-danger btn-xs" onclick="delTask(${t.id})">✕</button>
+          </div>`
+          :isMyTask?`
+          <div class="task-actions" style="flex-direction:column;align-items:stretch;gap:6px">
+            <div style="font-size:10px;color:var(--text3);letter-spacing:.5px">ຄວາມຄືບໜ້າຂອງຂ້ອຍ: <b style="color:var(--gold)">${t.prog||0}%</b></div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="range" min="0" max="100" value="${t.prog||0}"
+                style="flex:1;accent-color:var(--gold);height:4px;cursor:pointer"
+                oninput="this.nextElementSibling.textContent=this.value+'%'"
+                onchange="updateMyTaskProg(${t.id},parseInt(this.value))">
+              <span style="font-size:11px;font-family:'Space Mono',monospace;color:var(--gold);min-width:34px">${t.prog||0}%</span>
+            </div>
+            <div style="height:4px;background:var(--border2);border-radius:2px;overflow:hidden">
+              <div style="height:100%;width:${t.prog||0}%;background:${(t.prog||0)>=100?'var(--green)':(t.prog||0)>50?'var(--gold)':'var(--blue)'};border-radius:2px;transition:width .3s"></div>
+            </div>
+          </div>`
+          :`<div style="padding:4px 0;font-size:11px;color:var(--text3)">🔒 ວຽກຂອງ ${esc(t.assign)}</div>`}
+        </div>`}).join(''):`<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">ບໍ່ມີວຽກ</div>`}
+      </div></div>`;
+  }).join('');
+}
+
+function updateMyTaskProg(id,val){
+  const t=S.tasks.find(x=>x.id===id);
+  if(!t)return;
+  if(S.me&&S.me.role!=='admin'&&t.assign!==S.me.name){toast('⛔ ອັບເດດໄດ້ສະເພາະວຽກຂອງຕົວເອງ','e');return}
+  t.prog=val;
+  if(val>=100)t.stat='done';
+  updateBadges();renderDash();
+  toast('ອັບເດດວຽກ "'+t.name+'" → '+val+'% ✓');
+}
+
+function noPermToast(){toast('⛔ ສິດ Staff: ອັບເດດ % ວຽກຕົວເອງເທົ່ານັ້ນ','e')}
+
+function saveTask(){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ສາມາດເພີ່ມ/ແກ້ໄຂວຽກໄດ້','e');return}
+  const id=document.getElementById('tk-id').value;
+  const n=document.getElementById('tk-name').value.trim();
+  if(!n){toast('ກະລຸນາໃສ່ຊື່ວຽກ','e');return}
+  const obj={name:n,proj:document.getElementById('tk-proj').value||'-',assign:document.getElementById('tk-assign').value||'-',pri:document.getElementById('tk-pri').value,due:document.getElementById('tk-due').value||'-',stat:document.getElementById('tk-stat').value,prog:0};
+  if(id){const t=S.tasks.find(x=>x.id==id);if(t)Object.assign(t,obj);log('ແກ້ໄຂວຽກ: '+n)}
+  else{obj.id=uid();S.tasks.push(obj);log('ເພີ່ມວຽກ: '+n,'#3b82f6')}
+  closeM('m-task');renderKanban();updateBadges();toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ✓');
+}
+
+function editTask(id){
+  const t=S.tasks.find(x=>x.id===id);if(!t)return;
+  document.getElementById('tk-id').value=id;
+  document.getElementById('tk-name').value=t.name;
+  fillSelect('tk-proj',S.projects.map(p=>p.name),t.proj);
+  fillSelect('tk-assign',S.employees.map(e=>e.name),t.assign);
+  document.getElementById('tk-pri').value=t.pri;
+  document.getElementById('tk-due').value=t.due==='-'?'':t.due;
+  document.getElementById('tk-stat').value=t.stat;
+  openM('m-task');
+}
+
+function moveTask(id,stat){
+  const t=S.tasks.find(x=>x.id===id);
+  if(t){t.stat=stat;renderKanban();updateBadges();toast('ຍ້າຍ → '+KB_COLS.find(c=>c.k===stat).l);}
+}
+
+function delTask(id){
+  S.tasks=S.tasks.filter(x=>x.id!==id);
+  renderKanban();updateBadges();toast('ລົບວຽກສຳເລັດ');
+}
+
+// ===================================================================
+// EMPLOYEES
+// ===================================================================
+function renderEmps(search='',dept=''){
+  const isAdmin=S.me&&S.me.role==='admin';
+  const addBtn=document.getElementById('btn-addEmp');
+  if(addBtn)addBtn.style.display=isAdmin?'':'none';
+  let list=S.employees;
+  if(search)list=list.filter(e=>e.name.toLowerCase().includes(search.toLowerCase())||e.pos.toLowerCase().includes(search.toLowerCase()));
+  if(dept)list=list.filter(e=>e.dept===dept);
+  const DICON={Photography:'📸',Video:'🎬','Post-Production':'✂️',Admin:'🏢'};
+  document.getElementById('emp-grid').innerHTML=list.length?list.map((e,i)=>`
+    <div class="emp-card">
+      <div class="av" style="width:44px;height:44px;font-size:15px;background:${BGS[i%6]};color:${COLORS[i%7]}">${e.name.charAt(0)}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:700;margin-bottom:2px">${esc(e.name)}</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">${DICON[e.dept]||'👤'} ${esc(e.pos)}</div>
+        <div style="font-size:11px;color:var(--text3)">${e.tel}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:7px">
+        <span class="badge ${e.stat==='Active'?'bg-green':'bg-gray'}">${e.stat}</span>
+        ${isAdmin?`<div style="display:flex;gap:5px">
+          <button class="btn btn-outline btn-xs" onclick="editEmp(${e.id})">✏️</button>
+          <button class="btn btn-danger btn-xs" onclick="delEmp(${e.id})">🗑</button>
+        </div>`:''}
+      </div>
+    </div>`).join(''):`<div class="empty"><div class="empty-icon">👥</div>ບໍ່ພົບພະນັກງານ</div>`;
+}
+
+function saveEmp(){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເພີ່ມ/ແກ້ໄຂພະນັກງານໄດ້','e');return}
+  const id=document.getElementById('em-id').value;
+  const n=document.getElementById('em-name').value.trim();
+  if(!n){toast('ໃສ່ຊື່ກ່ອນ','e');return}
+  const obj={name:n,pos:document.getElementById('em-pos').value||'-',dept:document.getElementById('em-dept').value,tel:document.getElementById('em-tel').value||'-',email:document.getElementById('em-email').value||'-',stat:document.getElementById('em-stat').value};
+  if(id){const e=S.employees.find(x=>x.id==id);if(e)Object.assign(e,obj);}
+  else{obj.id=uid();S.employees.push(obj);}
+  closeM('m-emp');renderEmps();renderDash();toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ✓');
+}
+
+function editEmp(id){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ແກ້ໄຂໄດ້','e');return}
+  const e=S.employees.find(x=>x.id===id);if(!e)return;
+  document.getElementById('em-id').value=id;
+  document.getElementById('em-name').value=e.name;
+  document.getElementById('em-pos').value=e.pos;
+  document.getElementById('em-dept').value=e.dept;
+  document.getElementById('em-tel').value=e.tel;
+  document.getElementById('em-email').value=e.email;
+  document.getElementById('em-stat').value=e.stat;
+  openM('m-emp');
+}
+
+function delEmp(id){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ລົບໄດ້','e');return}
+  if(!confirm('ລົບພະນັກງານ?'))return;
+  S.employees=S.employees.filter(x=>x.id!==id);
+  renderEmps();renderDash();toast('ລົບສຳເລັດ');
+}
+
+// ===================================================================
+// EQUIPMENT
+// ===================================================================
+function renderEquip(search='',sf='',tf=''){
+  const isAdmin=S.me&&S.me.role==='admin';
+  // Show/hide admin-only buttons in header
+  const addBtn=document.querySelector('#sec-equipment .sec-head .btn-gold');
+  if(addBtn)addBtn.style.display=isAdmin?'':'none';
+
+  let list=S.equipment;
+  if(search)list=list.filter(e=>e.name.toLowerCase().includes(search.toLowerCase())||e.serial.toLowerCase().includes(search.toLowerCase()));
+  if(sf)list=list.filter(e=>e.stat===sf);
+  if(tf)list=list.filter(e=>e.type===tf);
+
+  document.getElementById('equip-tbl').innerHTML=list.length?list.map((e,i)=>{
+    const isMine=S.me&&e.owner===S.me.name&&e.stat==='ໃຊ້ຢູ່';
+    const isAvail=e.stat==='ພ້ອມໃຊ້';
+    const isFix=e.stat==='ຊ່ອມ';
+    const noOwner=!e.owner||e.owner==='—'||e.owner==='-';
+    return`<tr>
+      <td class="td-mono">${String(i+1).padStart(2,'0')}</td>
+      <td class="td-main">${esc(e.name)}</td>
+      <td><span class="badge bg-cyan">${e.type}</span></td>
+      <td class="td-mono" style="color:var(--text3)">${esc(e.serial)}</td>
+      <td style="font-weight:${isMine?700:400};color:${isMine?'var(--gold)':noOwner?'var(--text3)':'var(--blue)'}">
+        ${noOwner?'<span style="color:var(--text3)">—</span>':
+          `<div style="display:flex;align-items:center;gap:6px">
+            <div class="av" style="width:22px;height:22px;font-size:10px;background:${isMine?'rgba(240,180,41,.2)':'rgba(59,130,246,.15)'};color:${isMine?'var(--gold)':'var(--blue)'}">${e.owner.charAt(0)}</div>
+            ${esc(e.owner)}${isMine?` <span style="font-size:9px;color:var(--gold)">(ຂ້ອຍ)</span>`:''}
+          </div>`}
+      </td>
+      <td class="td-mono" style="color:${e.usedDate?'var(--gold)':'var(--text3)'}">
+        ${e.usedDate?'📅 '+e.usedDate:'—'}
+      </td>
+      <td style="color:${e.proj&&e.proj!=='—'&&e.proj!=='-'?'var(--text2)':'var(--text3)'};font-size:12px">
+        ${esc(e.proj&&e.proj!=='—'&&e.proj!=='-'?e.proj:'—')}
+        ${e.usedNote?`<div style="font-size:10px;color:var(--text3);margin-top:2px">📝${esc(e.usedNote.substring(0,30))}</div>`:''}
+      </td>
+      <td>${eqBadge(e.stat)}</td>
+      <td>
+        ${isAdmin?`<div style="display:flex;gap:4px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-xs" onclick="editEquip(${e.id})">✏️</button>
+          <button class="btn btn-xs" style="background:var(--border2);color:var(--text2)" onclick="cycleEquip(${e.id})">🔄</button>
+          <button class="btn btn-danger btn-xs" onclick="delEquip(${e.id})">🗑</button>
+        </div>`
+        :isAvail
+          ?`<button class="btn btn-gold btn-sm" style="font-size:11px;padding:5px 10px" onclick="staffTakeEquip(${e.id})">📦 ເອົາໄປໃຊ້</button>`
+        :isMine
+          ?`<button class="btn btn-success btn-sm" style="font-size:11px;padding:5px 10px" onclick="staffReturnEquip(${e.id})">↩ ສົ່ງຄືນ</button>`
+        :isFix
+          ?`<span style="font-size:11px;color:var(--red)">🔧 ສົ່ງຊ່ອມ</span>`
+          :`<span style="font-size:11px;color:var(--text3)">🔒 ໃຊ້ໂດຍ<br>${esc(e.owner)}</span>`}
+      </td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="9"><div class="empty"><div class="empty-icon">📷</div>ບໍ່ພົບ</div></td></tr>`;
+}
+
+function staffTakeEquip(id){
+  if(!S.me){toast('ກະລຸນາ Login ກ່ອນ','e');return}
+  const e=S.equipment.find(x=>x.id===id);
+  if(!e||e.stat!=='ພ້ອມໃຊ້'){toast('ອຸປະກອນນີ້ບໍ່ພ້ອມໃຊ້','e');return}
+  document.getElementById('take-eq-name').textContent=e.name+' — '+e.type;
+  document.getElementById('take-eq-id').value=id;
+  document.getElementById('take-eq-user').textContent=S.me.name;
+  document.getElementById('take-av').textContent=S.me.name.charAt(0);
+  document.getElementById('take-eq-proj').innerHTML=
+    '<option value="— ບໍ່ລະບຸ —">— ບໍ່ລະບຸ —</option>'+
+    S.projects.filter(p=>p.stat!=='ສຳເລັດ').map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');
+  document.getElementById('take-eq-date').value=today();
+  document.getElementById('take-eq-note').value='';
+  document.getElementById('m-take-equip').classList.add('open');
+}
+
+function confirmTakeEquip(){
+  const id=parseInt(document.getElementById('take-eq-id').value);
+  const e=S.equipment.find(x=>x.id===id);
+  if(!e||!S.me){return}
+  if(e.stat!=='ພ້ອມໃຊ້'){toast('ອຸປະກອນນີ້ຖືກໃຊ້ແລ້ວ','e');return}
+  const proj=document.getElementById('take-eq-proj').value||'—';
+  const date=document.getElementById('take-eq-date').value||today();
+  if(!date){toast('ກະລຸນາໃສ່ວັນທີ','e');return}
+  const note=document.getElementById('take-eq-note').value;
+  // Force owner = logged-in user only
+  e.stat='ໃຊ້ຢູ່';
+  e.owner=S.me.name;   // <<<< ຊື່ຕົວເອງ — ບໍ່ໃຫ້ປ່ຽນໄດ້
+  e.proj=proj;
+  e.usedDate=date;
+  e.usedNote=note;
+  document.getElementById('m-take-equip').classList.remove('open');
+  renderEquip();renderDash();
+  log(S.me.name+' ເອົາ "'+e.name+'" ໄປໃຊ້ — '+proj+' — '+date,'#f0b429');
+  toast('✓ "'+e.name+'" ກຳລັງໃຊ້ໂດຍ: '+S.me.name+'  📅'+date);
+}
+
+function staffReturnEquip(id){
+  const e=S.equipment.find(x=>x.id===id);
+  if(!e)return;
+  // Staff ສົ່ງຄືນໄດ້ສະເພາະຂອງຕົວເອງ
+  if(S.me&&S.me.role!=='admin'&&e.owner!==S.me.name){
+    toast('⛔ ສົ່ງຄືນໄດ້ສະເພາະອຸປະກອນທີ່ຕົວເອງເອົາໄປ','e');return
+  }
+  if(!confirm('ສົ່ງຄືນ "'+e.name+'" ?'))return;
+  const prev=e.owner;
+  e.stat='ພ້ອມໃຊ້';e.owner='—';e.proj='—';e.usedDate='';e.usedNote='';
+  renderEquip();renderDash();
+  log(prev+' ສົ່ງ "'+e.name+'" ຄືນແລ້ວ','#22c55e');
+  toast('↩ ສົ່ງ "'+e.name+'" ຄືນສຳເລັດ ✓');
+}
+
+function saveEquip(){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເພີ່ມ/ແກ້ໄຂອຸປະກອນໄດ້','e');return}
+  const id=document.getElementById('eq-id').value;
+  const n=document.getElementById('eq-name').value.trim();
+  if(!n){toast('ໃສ່ຊື່ກ່ອນ','e');return}
+  const obj={name:n,type:document.getElementById('eq-type').value,serial:document.getElementById('eq-serial').value||'-',owner:document.getElementById('eq-owner').value||'—',proj:document.getElementById('eq-proj').value||'—',stat:document.getElementById('eq-stat').value,note:document.getElementById('eq-note').value};
+  if(id){const e=S.equipment.find(x=>x.id==id);if(e)Object.assign(e,obj);}
+  else{obj.id=uid();S.equipment.push(obj);}
+  closeM('m-equip');renderEquip();renderDash();toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ✓');
+}
+
+function editEquip(id){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເຮັດໄດ້','e');return}
+  const e=S.equipment.find(x=>x.id===id);if(!e)return;
+  document.getElementById('eq-id').value=id;
+  document.getElementById('eq-name').value=e.name;
+  document.getElementById('eq-type').value=e.type;
+  document.getElementById('eq-serial').value=e.serial;
+  fillSelect('eq-owner',[...S.employees.map(x=>x.name),'—'],e.owner);
+  fillSelect('eq-proj',['—',...S.projects.map(p=>p.name)],e.proj);
+  document.getElementById('eq-stat').value=e.stat;
+  document.getElementById('eq-note').value=e.note||'';
+  openM('m-equip');
+}
+
+function cycleEquip(id){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເຮັດໄດ້','e');return}
+  const e=S.equipment.find(x=>x.id===id);if(!e)return;
+  const c=['ພ້ອມໃຊ້','ໃຊ້ຢູ່','ຊ່ອມ'];
+  e.stat=c[(c.indexOf(e.stat)+1)%3];
+  renderEquip();renderDash();toast(e.name+' → '+e.stat);
+}
+
+function delEquip(id){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ລົບໄດ້','e');return}
+  if(!confirm('ລົບອຸປະກອນ?'))return;
+  S.equipment=S.equipment.filter(x=>x.id!==id);
+  renderEquip();renderDash();toast('ລົບສຳເລັດ');
+}
+
+// ===================================================================
+// SCHEDULE
+// ===================================================================
+function renderSched(){
+  const isAdmin=S.me&&S.me.role==='admin';
+  const addBtn=document.querySelector('#sec-schedule .sec-head .btn-gold');
+  if(addBtn)addBtn.style.display=isAdmin?'':'none';
+  document.getElementById('sched-tbl').innerHTML=S.schedules.length?S.schedules.map(s=>`
+    <tr>
+      <td class="td-mono" style="color:${isLate(s.date)?'var(--text3)':'var(--gold)'}">${s.date}</td>
+      <td class="td-main">${esc(s.name)}</td>
+      <td style="color:var(--text3)">${esc(s.proj)}</td>
+      <td>${esc(s.loc)}</td>
+      <td style="font-size:12px;color:var(--text3)">${esc(s.team)}</td>
+      <td class="td-mono">${s.time}</td>
+      <td><span class="badge ${s.stat==='ສຳເລັດ'?'bg-green':'bg-blue'}">${s.stat}</span></td>
+      <td><div style="display:flex;gap:5px">
+        ${isAdmin?`
+          <button class="btn btn-outline btn-xs" onclick="editSched(${s.id})">✏️</button>
+          ${s.stat!=='ສຳເລັດ'?`<button class="btn btn-success btn-xs" onclick="doneSched(${s.id})">✓</button>`:''}
+          <button class="btn btn-danger btn-xs" onclick="delSched(${s.id})">🗑</button>
+        `:`<span style="font-size:11px;color:var(--text3)">— ດູເທົ່ານັ້ນ —</span>`}
+      </div></td>
+    </tr>`).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📅</div>ບໍ່ມີຕາຕະລາງ</div></td></tr>`;
+}
+
+function saveSched(){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເພີ່ມ/ແກ້ໄຂຕາຕະລາງໄດ້','e');return}
+  const id=document.getElementById('sc-id').value;
+  const n=document.getElementById('sc-name').value.trim();
+  if(!n){toast('ໃສ່ຊື່ກ່ອນ','e');return}
+  const obj={name:n,proj:document.getElementById('sc-proj').value||'-',date:document.getElementById('sc-date').value||'-',time:document.getElementById('sc-time').value||'-',loc:document.getElementById('sc-loc').value||'-',team:document.getElementById('sc-team').value||'-',note:document.getElementById('sc-note').value,stat:'ກຳນົດການ'};
+  if(id){const s=S.schedules.find(x=>x.id==id);if(s)Object.assign(s,obj);}
+  else{obj.id=uid();S.schedules.push(obj);}
+  closeM('m-sched');renderSched();toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ✓');
+}
+
+function editSched(id){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ແກ້ໄຂໄດ້','e');return}
+  const s=S.schedules.find(x=>x.id===id);if(!s)return;
+  document.getElementById('sc-id').value=id;
+  document.getElementById('sc-name').value=s.name;
+  fillSelect('sc-proj',S.projects.map(p=>p.name),s.proj);
+  document.getElementById('sc-date').value=s.date==='-'?'':s.date;
+  document.getElementById('sc-time').value=s.time;
+  document.getElementById('sc-loc').value=s.loc;
+  document.getElementById('sc-team').value=s.team;
+  document.getElementById('sc-note').value=s.note;
+  openM('m-sched');
+}
+
+function doneSched(id){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເຮັດໄດ້','e');return}
+  const s=S.schedules.find(x=>x.id===id);
+  if(s){s.stat='ສຳເລັດ';renderSched();toast('ທຳເຄື່ອງໝາຍສຳເລັດ ✓')}
+}
+function delSched(id){
+  if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ລົບໄດ້','e');return}
+  if(!confirm('ລົບ?'))return;
+  S.schedules=S.schedules.filter(x=>x.id!==id);renderSched();toast('ລົບສຳເລັດ');
+}
+
+// ===================================================================
+// REVIEW SYSTEM
+// ===================================================================
+function renderReview(){
+  // Update pipeline
+  const counts={draft:0,reviewing:0,approved:0,final:0};
+  S.reviews.forEach(r=>{if(counts[r.stat]!==undefined)counts[r.stat]++});
+  document.getElementById('rv-pipe').innerHTML=[
+    {k:'draft',n:1,l:'Draft',sl:'ລໍຖ້າກວດ'},
+    {k:'reviewing',n:2,l:'ກຳລັງກວດ',sl:'ມີ Comment'},
+    {k:'approved',n:3,l:'Approved',sl:'ອະນຸມັດແລ້ວ'},
+    {k:'final',n:4,l:'Final / ສົ່ງ',sl:'ລູກຄ້າດາວໂຫລດ'},
+  ].map(s=>`
+    <div class="pipe-step ${rvSF===s.k?'ps-active':''}" onclick="rvSF=rvSF==='${s.k}'?'':'${s.k}';renderReview()">
+      <div class="ps-num">${s.n}</div>
+      <div><div class="ps-lbl">${s.l}</div><div class="ps-cnt">${counts[s.k]} ລາຍການ</div></div>
+    </div>`).join('');
+
+  // Update project filter
+  const pf=document.querySelector('#sec-review select.fsel');
+  if(pf&&pf.options.length<=1){S.projects.forEach(p=>{const o=document.createElement('option');o.value=p.name;o.textContent=p.name;pf.appendChild(o)})}
+
+  // Filter
+  let list=S.reviews;
+  if(rvSearch)list=list.filter(r=>r.title.toLowerCase().includes(rvSearch.toLowerCase())||r.proj.toLowerCase().includes(rvSearch.toLowerCase()));
+  if(rvPF)list=list.filter(r=>r.proj===rvPF);
+  if(rvTF)list=list.filter(r=>r.type===rvTF);
+  if(rvSF)list=list.filter(r=>r.stat===rvSF);
+
+  document.getElementById('rv-list').innerHTML=list.length?list.map(r=>{
+    const s=SM[r.stat]||{l:r.stat,c:'bg-gray'};
+    const pending=r.comments.filter(c=>c.type==='revision'||c.type==='reject').length;
+    const isPhoto=r.type==='photo';
+    const photos=r.photos||[];
+    const photoSel=photos.filter(p=>p.ok===true).length;
+    const photoRej=photos.filter(p=>p.ok===false).length;
+    const canEdit=S.me&&(S.me.role==='admin'||(r.by===S.me.name));
+    return`<div class="rv-card">
+      <div class="rv-hdr">
+        <div class="rv-thumb" style="${isPhoto?'background:linear-gradient(135deg,var(--bg3),rgba(240,180,41,.08))':''}">${TI[r.type]||'📁'}</div>
+        <div style="flex:1">
+          <div class="rv-title">${esc(r.title)}</div>
+          <div class="rv-meta">
+            <span>📁 ${esc(r.proj)}</span>
+            <span>📅 ${r.at}</span>
+            <span>👤 ${esc(r.by)}</span>
+            <span>🗂 ${r.ver}</span>
+            <span>💾 ${r.fsize}</span>
+            ${isPhoto?`<span style="color:var(--cyan)">📸 ${r.photoCount||photos.length} ຮູບ</span>`:''}
+            <span>💬 ${r.comments.length}</span>
+            ${pending?`<span class="badge bg-orange">⚠ ${pending} ຂໍແກ້ໄຂ</span>`:''}
+          </div>
+        </div>
+        <div class="rv-actions">
+          <span class="badge ${s.c}">${s.l}</span>
+          <button class="btn btn-blue btn-sm" onclick="openRVDetail(${r.id})">${isPhoto?'📸 ເລືອກ/ກວດຮູບ':'🔍 ກວດ & Comment'}</button>
+          ${r.stat==='approved'&&(S.me&&S.me.role==='admin')?`<button class="btn btn-gold btn-sm" onclick="promoteToFinal(${r.id})">📦 ສ້າງ Final</button>`:''}
+          ${r.stat==='final'?`<button class="btn btn-success btn-sm" onclick="openClientLink(${r.id})">🔗 ລິ້ງລູກຄ້າ</button>`:''}
+        </div>
+      </div>
+      ${isPhoto&&photos.length?`
+      <div class="rv-stats-row">
+        <div class="rv-stat"><div class="rv-stat-val" style="color:var(--text)">${r.photoCount||photos.length}</div><div class="rv-stat-lbl">ທັງໝົດ</div></div>
+        <div class="rv-stat"><div class="rv-stat-val" style="color:var(--green)">${photoSel}</div><div class="rv-stat-lbl">✓ Select</div></div>
+        <div class="rv-stat"><div class="rv-stat-val" style="color:var(--red)">${photoRej}</div><div class="rv-stat-lbl">✕ ຕັດອອກ</div></div>
+        <div class="rv-stat"><div class="rv-stat-val" style="color:var(--gold)">${photos.filter(p=>p.ok===null).length}</div><div class="rv-stat-lbl">ລໍຖ້າ</div></div>
+      </div>
+      <div class="rv-photo-section">
+        <div class="rv-photo-count">ຕົວຢ່າງ ${Math.min(photos.length,8)} ຮູບ — ກົດ "📸 ເລືອກ/ກວດຮູບ" ເພື່ອຈັດການທັງໝົດ</div>
+        <div class="photo-grid">
+          ${photos.slice(0,8).map(p=>`
+          <div class="photo-thumb" onclick="openRVDetail(${r.id})" style="background:${p.ok===true?'rgba(34,197,94,.08)':p.ok===false?'rgba(239,68,68,.06)':'var(--bg3)'}">
+            <div class="photo-thumb-placeholder">
+              <span>${p.ok===true?'✅':p.ok===false?'❌':'🖼'}</span>
+              <small style="font-size:9px;color:${p.ok===true?'var(--green)':p.ok===false?'var(--red)':'var(--text3)'}">${p.name.replace(/\.[^.]+$/,'')}</small>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>`:`
+      <div style="padding:12px 18px">
+        <div class="ver-tabs">${r.versions.map((v,i)=>`<div class="ver-tab ${i===r.versions.length-1?'vt-active':''} ${v.stat==='rejected'?'vt-no':v.stat==='approved'||v.stat==='final'?'vt-ok':''}">${v.label}</div>`).join('')}</div>
+        <div style="font-size:12px;color:var(--text3)">📝 ${esc(r.note)}</div>
+        ${r.comments.length?`<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">${r.comments.slice(-2).map(c=>`<div style="display:flex;gap:8px;background:var(--bg3);border:1px solid var(--border);padding:8px 12px;flex:1;min-width:180px;max-width:400px"><div class="av" style="width:24px;height:24px;font-size:10px;background:rgba(59,130,246,.15);color:var(--blue)">${c.av}</div><div><div style="font-size:11px;font-weight:700">${esc(c.author)}</div><div style="font-size:12px;color:var(--text2)">${esc(c.text.substring(0,80))}${c.text.length>80?'...':''}</div></div></div>`).join('')}</div>`:''}
+      </div>`}
+    </div>`;
+  }).join(''):`<div class="empty"><div class="empty-icon">🎞️</div>ບໍ່ພົບລາຍການ</div>`;
+  updateBadges();
+}
+
+function openRVDetail(id){
+  const r=S.reviews.find(x=>x.id===id);if(!r)return;
+  curRV=id;
+  const isPhoto=r.type==='photo';
+  const photos=r.photos||[];
+  const canAct=S.me&&(S.me.role==='admin'||r.by===S.me.name||r.reviewer===S.me.name);
+  const STEPS=['draft','reviewing','approved','final'];
+  const si=STEPS.indexOf(r.stat);
+  document.getElementById('rvd-title').textContent=r.title;
+  document.getElementById('rvd-sub').textContent=r.proj+' · '+r.ver+(isPhoto?` · 📸 ${r.photoCount||photos.length} ຮູບ`:'');
+
+  // Preview panel — photo gallery OR video
+  const prevEl=document.getElementById('rvd-icon').parentElement;
+  if(isPhoto&&photos.length){
+    const sel=photos.filter(p=>p.ok===true).length;
+    const rej=photos.filter(p=>p.ok===false).length;
+    prevEl.innerHTML=`
+      <div style="font-size:10px;font-family:'Space Mono',monospace;color:var(--text3);letter-spacing:1px;margin-bottom:8px;width:100%;display:flex;justify-content:space-between;align-items:center">
+        <span>PHOTO GALLERY</span>
+        <span style="color:var(--green)">✓${sel} &nbsp;</span><span style="color:var(--red)">✕${rej}</span>
+      </div>
+      <div class="photo-grid" style="width:100%;grid-template-columns:repeat(3,1fr)">
+        ${photos.map((p,i)=>`
+        <div class="photo-thumb" onclick="togglePhoto(${r.id},${i})" title="${p.name}${p.note?' — '+p.note:''}" style="background:${p.ok===true?'rgba(34,197,94,.1)':p.ok===false?'rgba(239,68,68,.08)':'var(--bg3)'}">
+          <div class="photo-thumb-placeholder">
+            <span style="font-size:20px">${p.ok===true?'✅':p.ok===false?'❌':'🖼'}</span>
+            <small style="font-size:9px;color:${p.ok===true?'var(--green)':p.ok===false?'var(--red)':'var(--text3)'}">${p.name.replace(/\.[^.]+$/,'')}</small>
+            ${p.note?`<small style="font-size:8px;color:var(--orange)">${esc(p.note)}</small>`:''}
+          </div>
+          <div class="photo-overlay">
+            <button style="background:rgba(34,197,94,.8);border:none;color:#fff;padding:4px 8px;font-size:11px;cursor:pointer;border-radius:2px" onclick="event.stopPropagation();setPhoto(${r.id},${i},true)">✓</button>
+            <button style="background:rgba(239,68,68,.8);border:none;color:#fff;padding:4px 8px;font-size:11px;cursor:pointer;border-radius:2px" onclick="event.stopPropagation();setPhoto(${r.id},${i},false)">✕</button>
+          </div>
+        </div>`).join('')}
+        ${canAct?`<div class="photo-thumb photo-upload-add" onclick="addPhotoMock(${r.id})">
+          <div class="photo-thumb-placeholder"><span style="font-size:20px">➕</span><small>ເພີ່ມ</small></div>
+        </div>`:''}
+      </div>
+      <div style="margin-top:10px;display:flex;gap:6px;justify-content:center">
+        ${canAct?`<button class="btn btn-success btn-xs" onclick="selectAllPhotos(${r.id})">✓ Select ທັງໝົດ</button>
+        <button class="btn btn-danger btn-xs" onclick="clearAllPhotos(${r.id})">✕ Reset</button>`:''}
+      </div>
+      <div class="wm-badge ${r.stat==='final'?'wm-final':''}">${r.stat==='final'?'✓ FINAL':'DRAFT'}</div>`;
+  } else {
+    prevEl.innerHTML=`
+      <div style="font-size:52px" id="rvd-icon">${TI[r.type]||'📁'}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);text-align:center">${esc(r.fname)}</div>
+      <div style="font-size:11px;color:var(--text3)">${r.fsize}</div>
+      <div class="wm-badge ${r.stat==='final'?'wm-final':''}">${r.stat==='final'?'✓ FINAL':'DRAFT'}</div>`;
+  }
+
+  // Steps bar
+  document.getElementById('rvd-steps').innerHTML=STEPS.map((s,i)=>`<div class="step-seg ${i<si?'s-done':i===si?'s-now':''}"></div>`).join('')+`<span class="step-lbl">${{draft:'ລໍຖ້າກວດ',reviewing:'ກຳລັງກວດ',approved:'Approved',final:'Final ✓'}[r.stat]}</span>`;
+
+  // Info
+  const photoSel=photos.filter(p=>p.ok===true).length;
+  document.getElementById('rvd-info').innerHTML=`
+    <div class="info-row"><div class="info-key">ໂປຣເຈັກ</div><div class="info-val">${esc(r.proj)}</div></div>
+    <div class="info-row"><div class="info-key">ອັບໂຫຼດໂດຍ</div><div class="info-val">${esc(r.by)}</div></div>
+    <div class="info-row"><div class="info-key">ຜູ້ກວດ</div><div class="info-val">${esc(r.reviewer)}</div></div>
+    <div class="info-row"><div class="info-key">ວັນທີ</div><div class="info-val">${r.at}</div></div>
+    <div class="info-row"><div class="info-key">ຂະໜາດ</div><div class="info-val">${r.fsize}</div></div>
+    ${isPhoto?`<div class="info-row"><div class="info-key">ຮູບທັງໝົດ</div><div class="info-val">${r.photoCount||photos.length} ຮູບ</div></div>
+    <div class="info-row"><div class="info-key">Select ແລ້ວ</div><div class="info-val" style="color:var(--green)">${photoSel} ຮູບ ✓</div></div>`:''}
+    <div class="info-row"><div class="info-key">ໝາຍເຫດ</div><div class="info-val" style="font-size:12px">${esc(r.note)}</div></div>`;
+
+  // Versions
+  document.getElementById('rvd-vers').innerHTML=r.versions.map((v,i)=>`<div class="ver-tab ${i===r.versions.length-1?'vt-active':''} ${v.stat==='rejected'?'vt-no':v.stat==='approved'||v.stat==='final'?'vt-ok':''}">${v.label} <span style="font-size:9px;opacity:.7">${v.date}</span></div>`).join('')+(canAct?`<div class="ver-tab" style="border-style:dashed;cursor:pointer" onclick="addVersion(${r.id})">+ ໃໝ່</div>`:'');
+
+  // Comments
+  document.getElementById('rvd-cmts').innerHTML=r.comments.length?r.comments.map(c=>{
+    const ct=CTYPE[c.type]||{l:c.type,c:'bg-gray'};
+    return`<div class="cmt-item">
+      <div class="av" style="width:30px;height:30px;font-size:12px;background:rgba(59,130,246,.15);color:var(--blue)">${c.av}</div>
+      <div class="cmt-bubble">
+        <div class="cmt-top"><span class="cmt-author">${esc(c.author)}</span><span class="badge ${ct.c}" style="font-size:9px">${ct.l}</span><span class="cmt-time">${c.time}</span></div>
+        <div class="cmt-text">${esc(c.text)}</div>
+      </div></div>`;
+  }).join(''):`<div style="padding:14px;text-align:center;color:var(--text3);font-size:12px">ຍັງບໍ່ມີ Comment</div>`;
+
+  // Comment input — show/hide based on permission
+  const cmtInput=document.getElementById('rvd-cmt-input');
+  cmtInput.style.display=canAct?'flex':'none';
+  if(!canAct){
+    const noPermDiv=document.getElementById('rvd-no-perm')||(() =>{const d=document.createElement('div');d.id='rvd-no-perm';d.style.cssText='text-align:center;padding:12px;color:var(--text3);font-size:12px;background:var(--bg3);border:1px solid var(--border);margin-top:10px';d.textContent='⛔ ເຈົ້າບໍ່ມີສິດ Comment ລາຍການນີ້ — ພຽງແຕ່ Admin / ຜູ້ອັບໂຫຼດ / ຜູ້ກວດ';cmtInput.insertAdjacentElement('afterend',d);return d})();
+    noPermDiv.style.display='block';
+  } else {
+    const d=document.getElementById('rvd-no-perm');if(d)d.style.display='none';
+  }
+  if(S.me)document.getElementById('rvd-my-av').textContent=S.me.name.charAt(0);
+
+  // Footer actions — permission based
+  let fb='<button class="btn btn-outline" onclick="closeM(\'m-rv-detail\')">ປິດ</button>';
+  if(canAct){
+    if(r.stat==='draft'||r.stat==='reviewing'){
+      fb+=`<button class="btn btn-danger" onclick="rejectRV(${r.id})">❌ ຂໍແກ້ໄຂ</button>`;
+      fb+=`<button class="btn btn-success" onclick="approveRV(${r.id})">✅ ອະນຸມັດ</button>`;
+    }else if(r.stat==='approved'&&S.me.role==='admin'){
+      fb+=`<button class="btn btn-gold" onclick="promoteToFinal(${r.id});closeM('m-rv-detail')">📦 ສ້າງ Final</button>`;
+    }else if(r.stat==='final'){
+      fb+=`<button class="btn btn-success" onclick="closeM('m-rv-detail');openClientLink(${r.id})">🔗 ລິ້ງລູກຄ້າ</button>`;
+    }
+  }
+  document.getElementById('rvd-footer').innerHTML=fb;
+  openM('m-rv-detail');
+}
+
+function submitComment(){
+  const r=S.reviews.find(x=>x.id===curRV);if(!r)return;
+  const txt=document.getElementById('rvd-cmt-txt').value.trim();
+  if(!txt){toast('ໃສ່ຄຳເຫັນກ່ອນ','e');return}
+  const type=document.getElementById('rvd-cmt-type').value;
+  const user=S.me||{name:'User'};
+  r.comments.push({id:uid(),author:user.name,av:user.name.charAt(0),col:'#f0b429',type,text:txt,time:now()});
+  if(type==='revision'||type==='reject')r.stat='reviewing';
+  document.getElementById('rvd-cmt-txt').value='';
+  log(user.name+' Comment ໃນ "'+r.title+'"','#3b82f6');
+  openRVDetail(curRV);toast('ສົ່ງ Comment ✓');
+}
+
+function approveRV(id){
+  const r=S.reviews.find(x=>x.id===id);if(!r)return;
+  r.stat='approved';
+  const user=S.me||{name:'Admin'};
+  r.comments.push({id:uid(),author:user.name,av:user.name.charAt(0),col:'#22c55e',type:'approve',text:'✅ ອະນຸມັດ '+r.ver+' — ພ້ອມ Finalize',time:now()});
+  r.versions[r.versions.length-1].stat='approved';
+  log('ອະນຸມັດ "'+r.title+'"','#22c55e');
+  closeM('m-rv-detail');renderReview();toast('✅ Approved "'+r.title+'" ສຳເລັດ!');
+}
+
+function rejectRV(id){
+  const r=S.reviews.find(x=>x.id===id);if(!r)return;
+  r.stat='reviewing';
+  r.versions[r.versions.length-1].stat='rejected';
+  document.getElementById('rvd-cmt-type').value='revision';
+  toast('ໝາຍເປັນ "ຂໍແກ້ໄຂ" — ໃສ່ Comment ລາຍລະອຽດ','i');
+}
+
+function addVersion(id){
+  const r=S.reviews.find(x=>x.id===id);if(!r)return;
+  const vn=r.versions.length+1;
+  const label=vn>=4?'Final':'Draft '+vn;
+  r.versions.push({label,stat:'draft',date:today()});
+  r.stat='draft';r.ver=label;
+  log('ເພີ່ມ '+label+' ໃນ "'+r.title+'"');
+  openRVDetail(id);toast('ເພີ່ມ '+label+' ✓');
+}
+
+function promoteToFinal(id){
+  const r=S.reviews.find(x=>x.id===id);if(!r)return;
+  if(r.stat!=='approved'&&!confirm('ຍັງບໍ່ Approve — ສ້າງ Final ຕ່ອງ?'))return;
+  r.stat='final';r.ver='Final';
+  r.link='https://lumina.la/download/'+r.proj.replace(/\s+/g,'-').toLowerCase().replace(/[^a-z0-9-]/g,'')+'-'+Math.random().toString(36).substr(2,6);
+  r.deliveredAt=today();r.dlCount=0;
+  if(!r.versions.find(v=>v.label==='Final'))r.versions.push({label:'Final',stat:'final',date:r.deliveredAt});
+  else r.versions[r.versions.length-1].stat='final';
+  log('📦 Final Delivery: "'+r.title+'" — ລູກຄ້າດາວໂຫລດໄດ້','#a855f7');
+  renderReview();toast('📦 Final ສຳເລັດ! ລູກຄ້າດາວໂຫລດໄດ້ ✓');
+}
+
+// Upload draft
+function previewFile(input){
+  if(!input.files[0])return;
+  const f=input.files[0];
+  const ext=f.name.split('.').pop().toLowerCase();
+  const ic=['mp4','mov','avi','mkv'].includes(ext)?'🎬':['jpg','jpeg','png','zip'].includes(ext)?'📸':'📄';
+  document.getElementById('up-icon').textContent=ic;
+  document.getElementById('up-fname').textContent=f.name;
+  document.getElementById('up-fsize').textContent=(f.size/1024/1024).toFixed(1)+' MB';
+}
+
+function submitDraft(){
+  const title=document.getElementById('up-title').value.trim();
+  if(!title){toast('ໃສ່ຊື່ Draft ກ່ອນ','e');return}
+  const type=document.getElementById('up-type').value;
+  const ext={video:'mp4',photo:'zip',doc:'pdf'}[type]||'mp4';
+  const r={id:uid(),title,proj:document.getElementById('up-proj').value||'-',type,stat:'draft',ver:document.getElementById('up-ver').value,fname:title.replace(/\s/g,'_')+'.'+ext,fsize:rnd(100,1900)+' MB',by:S.me?S.me.name:'Staff',reviewer:document.getElementById('up-reviewer').value||'-',at:today(),note:document.getElementById('up-note').value||'-',versions:[{label:document.getElementById('up-ver').value,stat:'draft',date:today()}],comments:[]};
+  S.reviews.push(r);
+  log('ອັບໂຫຼດ Draft: "'+title+'"','#06b6d4');
+  closeM('m-upload');renderReview();toast('ອັບໂຫຼດ "'+title+'" ສຳເລັດ ✓');
+  ['up-title','up-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+}
+
+// Client link
+function openClientLink(id){
+  const r=S.reviews.find(x=>x.id===id);
+  if(!r||!r.link){toast('ກະລຸນາ Promote to Final ກ່ອນ','e');return}
+  curRV=id;
+  document.getElementById('cl-title').textContent=r.title;
+  document.getElementById('cl-sub').textContent=r.proj+' · '+r.fsize;
+  document.getElementById('cl-link').value=r.link;
+  document.getElementById('cl-info').innerHTML=`
+    <div class="info-row"><div class="info-key">ໄຟລ໌</div><div class="info-val">${esc(r.fname)}</div></div>
+    <div class="info-row"><div class="info-key">ຂະໜາດ</div><div class="info-val">${r.fsize}</div></div>
+    <div class="info-row"><div class="info-key">ສົ່ງວັນທີ</div><div class="info-val">${r.deliveredAt||'-'}</div></div>
+    <div class="info-row"><div class="info-key">ດາວໂຫລດ</div><div class="info-val">${r.dlCount||0} ຄັ້ງ</div></div>`;
+  const exp=new Date(r.deliveredAt||today());exp.setDate(exp.getDate()+30);
+  document.getElementById('cl-exp').textContent='⏳ ໝົດອາຍຸ: '+exp.toLocaleDateString('lo-LA')+' (30 ວັນ)';
+  openM('m-client');
+}
+
+function copyLink(){
+  const link=document.getElementById('cl-link');
+  link.select();
+  try{navigator.clipboard.writeText(link.value).catch(()=>{});document.execCommand('copy');}catch(e){}
+  toast('Copy ລິ້ງສຳເລັດ ✓');
+}
+
+function simDownload(){
+  const r=S.reviews.find(x=>x.id===curRV);
+  if(r)r.dlCount=(r.dlCount||0)+1;
+  toast('⬇ ຈຳລອງ: ລູກຄ້າດາວໂຫລດ "'+( r?r.fname:'file')+'" ສຳເລັດ ✓');
+}
+
+// Delivery page
+function renderDelivery(){
+  const finals=S.reviews.filter(r=>r.stat==='final');
+  const totalDL=finals.reduce((s,r)=>s+(r.dlCount||0),0);
+  document.getElementById('dlv-list').innerHTML=`
+    <div class="stats-row" style="margin-bottom:18px">
+      <div class="stat-card c-green"><div class="stat-icon">📦</div><div class="stat-label">Final ທັງໝົດ</div><div class="stat-value">${finals.length}</div><div class="stat-sub">ສົ່ງລູກຄ້າ</div></div>
+      <div class="stat-card c-blue"><div class="stat-icon">⬇</div><div class="stat-label">ດາວໂຫລດ</div><div class="stat-value">${totalDL}</div><div class="stat-sub">ທຸກລາຍການ</div></div>
+    </div>
+    ${finals.length?finals.map(r=>`
+    <div class="dlv-card">
+      <div class="dlv-icon">${TI[r.type]||'📁'}</div>
+      <div style="flex:1">
+        <div class="dlv-title">${esc(r.title)}</div>
+        <div class="dlv-detail">📁 ${esc(r.fname)} &nbsp;|&nbsp; 💾 ${r.fsize} &nbsp;|&nbsp; 📅 ${r.deliveredAt||'-'} &nbsp;|&nbsp; ⬇ ${r.dlCount||0} ຄັ້ງ</div>
+        <div class="link-row" style="margin-top:7px">
+          <span>🔗</span><input value="${r.link||''}" readonly onclick="this.select()">
+          <button class="link-copy" onclick="(()=>{try{navigator.clipboard.writeText('${r.link||''}');}catch(e){}})();toast('Copy ✓')">Copy</button>
+        </div>
+      </div>
+      <div class="dlv-actions">
+        <span class="badge bg-green">✓ Delivered</span>
+        <button class="btn btn-outline btn-sm" onclick="openClientLink(${r.id})">🔗 ລິ້ງລູກຄ້າ</button>
+        <button class="btn btn-blue btn-sm" onclick="openRVDetail(${r.id})">📋 ດູ Detail</button>
+      </div>
+    </div>`).join(''):`<div class="empty"><div class="empty-icon">📦</div>ຍັງບໍ່ມີ Final Delivery<br><span style="font-size:12px;margin-top:6px;display:block">Approve Draft → ກົດ "ສ້າງ Final"</span></div>`}`;
+}
+
+// ===================================================================
+// REPORTS & ADMIN
+// ===================================================================
+function renderReports(){
+  document.getElementById('rp-done').textContent=S.projects.filter(p=>p.stat==='ສຳເລັດ').length;
+  document.getElementById('rp-final').textContent=S.reviews.filter(r=>r.stat==='final').length;
+  document.getElementById('rp-dl').textContent=S.reviews.reduce((s,r)=>s+(r.dlCount||0),0);
+  document.getElementById('rp-ytd').textContent=S.projects.length+' ໂປຣເຈັກ';
+  document.getElementById('rp-emp').textContent=S.employees.length+' ຄົນ';
+  document.getElementById('rp-equip').textContent=S.equipment.length+' ຊິ້ນ';
+}
+
+function renderAdmin(){
+  document.getElementById('user-tbl').innerHTML=S.users.map(u=>`
+    <tr><td class="td-main">${esc(u.name)}</td><td class="td-mono">${esc(u.uname)}</td>
+    <td><span class="badge ${u.role==='admin'?'bg-gold':'bg-blue'}">${u.role.toUpperCase()}</span></td>
+    <td><span class="badge bg-green">${u.status}</span></td></tr>`).join('');
+}
+
+function saveUser(){
+  const n=document.getElementById('us-name').value.trim();
+  const u=document.getElementById('us-uname').value.trim();
+  const p=document.getElementById('us-pass').value;
+  if(!n||!u||!p){toast('ໃສ່ຂໍ້ມູນໃຫ້ຄົບ','e');return}
+  if(S.users.find(x=>x.uname===u)){toast('Username ນີ້ຖືກໃຊ້ແລ້ວ','e');return}
+  S.users.push({id:uid(),name:n,uname:u,pass:p,role:document.getElementById('us-role').value,status:'Active'});
+  closeM('m-user');renderAdmin();toast('ເພີ່ມຜູ້ໃຊ້ "'+n+'" ✓');
+  ['us-name','us-uname','us-pass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+}
+
+// ===================================================================
+// MODAL HELPERS
+// ===================================================================
+function openM(id){
+  const m=document.getElementById(id);if(!m)return;
+  // Populate dropdowns
+  const projOpts='<option value="">— ເລືອກ —</option>'+S.projects.map(p=>`<option>${esc(p.name)}</option>`).join('');
+  const empOpts=S.employees.map(e=>`<option>${esc(e.name)}</option>`).join('');
+  [['tk-proj',projOpts],['sc-proj',projOpts],['up-proj',projOpts]].forEach(([sel,opts])=>{const el=m.querySelector('#'+sel);if(el)el.innerHTML=opts});
+  [['tk-assign',empOpts],['eq-owner',empOpts],['up-reviewer',empOpts]].forEach(([sel,opts])=>{const el=m.querySelector('#'+sel);if(el)el.innerHTML=opts});
+  const eqProj=m.querySelector('#eq-proj');
+  if(eqProj)eqProj.innerHTML='<option value="-">ບໍ່ໄດ້ໃຊ້ງານ</option>'+S.projects.map(p=>`<option>${esc(p.name)}</option>`).join('');
+  // Reset hidden id if new form (not edit flow)
+  const hid=m.querySelector('input[type=hidden]');
+  if(hid&&!hid._editSet)hid.value='';
+  m.classList.add('open');
+}
+
+function closeM(id){
+  const m=document.getElementById(id);if(!m)return;
+  m.classList.remove('open');
+  const hid=m.querySelector('input[type=hidden]');if(hid){hid.value='';hid._editSet=false;}
+}
+
+document.querySelectorAll('.modal-bg').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')});
+});
+
+function fillSelect(id,opts,val){
+  const el=document.getElementById(id);if(!el)return;
+  el.innerHTML=opts.map(o=>`<option ${o===val?'selected':''}>${esc(o)}</option>`).join('');
+}
+
+// Mark edit
+function markEdit(modalId){const m=document.getElementById(modalId);if(m){const h=m.querySelector('input[type=hidden]');if(h)h._editSet=true;}}
+const origEditProject=editProject;
+function editProject(id){const m=document.getElementById('m-proj');if(m){const h=m.querySelector('input[type=hidden]');if(h)h._editSet=true;}origEditProject(id);}
+
+// ================================================================
+// PHOTO SELECTION FUNCTIONS
+// ================================================================
+function togglePhoto(rvId,idx){
+  const r=S.reviews.find(x=>x.id===rvId);if(!r||!r.photos)return;
+  const p=r.photos[idx];
+  // cycle: null → true → false → null
+  if(p.ok===null)p.ok=true;
+  else if(p.ok===true)p.ok=false;
+  else p.ok=null;
+  openRVDetail(rvId);
+}
+function setPhoto(rvId,idx,val){
+  const r=S.reviews.find(x=>x.id===rvId);if(!r||!r.photos)return;
+  r.photos[idx].ok=val;
+  openRVDetail(rvId);
+  const sel=r.photos.filter(p=>p.ok===true).length;
+  toast((val?'✓ Select':'✕ ຕັດ')+' "'+r.photos[idx].name+'" — Select ແລ້ວ: '+sel+' ຮູບ');
+}
+function selectAllPhotos(rvId){
+  const r=S.reviews.find(x=>x.id===rvId);if(!r||!r.photos)return;
+  r.photos.forEach(p=>p.ok=true);
+  openRVDetail(rvId);toast('✓ Select ທັງໝົດ '+r.photos.length+' ຮູບ');
+}
+function clearAllPhotos(rvId){
+  const r=S.reviews.find(x=>x.id===rvId);if(!r||!r.photos)return;
+  r.photos.forEach(p=>p.ok=null);
+  openRVDetail(rvId);toast('Reset ການ Select ທັງໝົດ');
+}
+function addPhotoMock(rvId){
+  const r=S.reviews.find(x=>x.id===rvId);if(!r)return;
+  const n=r.photos?r.photos.length+1:1;
+  const name='IMG_'+String(n).padStart(3,'0')+'.jpg';
+  if(!r.photos)r.photos=[];
+  r.photos.push({name,ok:null});
+  r.photoCount=(r.photoCount||0)+1;
+  openRVDetail(rvId);toast('ເພີ່ມ '+name+' ✓');
+}
+
+// ================================================================
+// PROFILE MODAL
+// ================================================================
+function openProfile(){
+  if(!S.me)return;
+  const u=S.me;
+  document.getElementById('pf-name').value=u.name;
+  document.getElementById('pf-uname').textContent=u.uname;
+  document.getElementById('pf-role-badge').textContent=u.role.toUpperCase();
+  document.getElementById('pf-av-disp').textContent=u.name.charAt(0);
+  document.getElementById('pf-av-disp').style.background=u.role==='admin'?'rgba(240,180,41,.25)':'rgba(59,130,246,.25)';
+  document.getElementById('pf-av-disp').style.color=u.role==='admin'?'var(--gold)':'var(--blue)';
+  document.getElementById('pf-pass').value='';
+  document.getElementById('pf-pass2').value='';
+  document.getElementById('pf-msg').textContent='';
+  openM('m-profile');
+}
+function saveProfile(){
+  if(!S.me)return;
+  const name=document.getElementById('pf-name').value.trim();
+  const pass=document.getElementById('pf-pass').value;
+  const pass2=document.getElementById('pf-pass2').value;
+  const msg=document.getElementById('pf-msg');
+  if(!name){msg.textContent='ກະລຸນາໃສ່ຊື່';msg.style.color='var(--red)';return}
+  if(pass&&pass!==pass2){msg.textContent='ລະຫັດຜ່ານບໍ່ຕົງກັນ';msg.style.color='var(--red)';return}
+  // Update user in users array
+  const uObj=S.users.find(x=>x.id===S.me.id);
+  if(uObj){
+    uObj.name=name;
+    if(pass)uObj.pass=pass;
+  }
+  S.me.name=name;
+  if(pass)S.me.pass=pass;
+  // Update sidebar
+  document.getElementById('sbAv').textContent=name.charAt(0);
+  document.getElementById('sbName').textContent=name;
+  msg.textContent='ບັນທຶກສຳເລັດ ✓';msg.style.color='var(--green)';
+  setTimeout(()=>closeM('m-profile'),800);
+  toast('ອັບເດດ Profile "'+name+'" ✓');
+  if(document.getElementById('sec-admin').classList.contains('active'))renderAdmin();
+}
+
+// ===================================================================
+// BADGE HELPERS
+// ===================================================================
+function statBadge(s){const M={ກຳລັງດຳເນີນ:'bg-blue',ສຳເລັດ:'bg-green',ວາງແຜນ:'bg-gold',ຍົກເລີກ:'bg-red'};return`<span class="badge ${M[s]||'bg-gray'}">${esc(s)}</span>`}
+function eqBadge(s){const M={ພ້ອມໃຊ້:'bg-green',ໃຊ້ຢູ່:'bg-blue',ຊ່ອມ:'bg-red'};return`<span class="badge ${M[s]||'bg-gray'}">${esc(s)}</span>`}
+
+// ===================================================================
+// TOAST
+// ===================================================================
+let _tt;
+function toast(msg,type='s'){
+  const T=document.getElementById('tst');
+  const COLS={s:'var(--green)',e:'var(--red)',i:'var(--blue)'};
+  const ICONS={s:'✓',e:'✕',i:'ℹ'};
+  T.style.borderLeftColor=COLS[type]||COLS.s;
+  document.getElementById('tst-icon').textContent=ICONS[type]||'✓';
+  document.getElementById('tst-msg').textContent=msg;
+  T.classList.add('show');clearTimeout(_tt);
+  _tt=setTimeout(()=>T.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>
