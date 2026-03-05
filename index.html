@@ -339,6 +339,17 @@ tbody tr:last-child td{border-bottom:none}
 .link-copy{font-size:11px;padding:3px 10px;background:var(--border2);color:var(--text2);border:none;cursor:pointer;transition:background .2s;font-family:'Noto Sans Lao',sans-serif}
 .link-copy:hover{background:var(--gold);color:var(--bg)}
 
+/* CLIENT PAGE */
+.cl-draft-card{background:var(--bg2);border:1px solid var(--border);margin-bottom:20px;overflow:hidden}
+.cl-draft-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cl-draft-body{padding:20px}
+.cl-name-input{background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:10px 14px;font-family:'Noto Sans Lao',sans-serif;font-size:14px;outline:none;width:100%;margin-bottom:10px}
+.cl-name-input:focus{border-color:var(--gold)}
+.cl-cmt-row{display:flex;gap:10px;margin-top:10px;align-items:flex-start}
+.cl-cmt-area{flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:10px;font-family:'Noto Sans Lao',sans-serif;font-size:13px;outline:none;resize:vertical;min-height:80px}
+.cl-cmt-area:focus{border-color:var(--gold)}
+.cl-action-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+
 /* TOAST */
 .toast{position:fixed;bottom:22px;right:22px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--green);padding:12px 16px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:13px;transform:translateX(130%);transition:transform .3s ease;min-width:260px;max-width:380px}
 .toast.show{transform:translateX(0)}
@@ -762,25 +773,41 @@ tbody tr:last-child td{border-bottom:none}
       <div class="fg"><label>ຊື່ Draft *</label><input id="up-title" placeholder="ເຊັ່ນ: TVC Pho Lao - Draft 1"></div>
       <div class="fg"><label>ໂປຣເຈັກ</label><select id="up-proj"></select></div>
       <div class="fg"><label>ປະເພດໄຟລ໌</label>
-        <select id="up-type"><option value="video">🎬 Video (MP4, MOV)</option><option value="photo">📸 Photo / ZIP</option><option value="doc">📄 Document / PDF</option></select>
+        <select id="up-type" onchange="toggleUploadMode()"><option value="video">🎬 Video (MP4, MOV)</option><option value="photo">📸 Photo (JPG, PNG)</option><option value="doc">📄 Document / PDF</option></select>
       </div>
       <div class="fg"><label>Version</label>
         <select id="up-ver"><option>Draft 1</option><option>Draft 2</option><option>Draft 3</option><option>Draft 4</option><option>Final</option></select>
       </div>
-      <div class="fg"><label>ໄຟລ໌</label>
-        <div class="file-drop" id="up-drop">
-          <input type="file" onchange="previewFile(this)" accept="video/*,image/*,.pdf,.zip">
+      <!-- Tab: Upload File vs Link -->
+      <div style="display:flex;gap:0;margin-bottom:14px;border:1px solid var(--border)">
+        <button id="up-tab-file" onclick="setUploadTab('file')" style="flex:1;padding:8px;background:var(--gold);color:#0c0f14;font-weight:700;border:none;cursor:pointer;font-size:12px">📁 Upload ໄຟລ໌</button>
+        <button id="up-tab-link" onclick="setUploadTab('link')" style="flex:1;padding:8px;background:var(--bg3);color:var(--text2);border:none;cursor:pointer;font-size:12px">🔗 ໃສ່ Link</button>
+      </div>
+      <div id="up-panel-file" class="fg">
+        <div class="file-drop" id="up-drop" onclick="document.getElementById('up-file-input').click()">
+          <input type="file" id="up-file-input" onchange="previewFile(this)" accept="video/*,image/*,.pdf,.zip" style="display:none">
           <div class="file-drop-icon" id="up-icon">📁</div>
-          <div class="file-drop-name" id="up-fname">ຄລິກ ຫຼື ລາກໄຟລ໌ໃສ່ນີ້</div>
-          <div class="file-drop-sub" id="up-fsize">MP4, MOV, JPG, PNG, PDF, ZIP</div>
+          <div class="file-drop-name" id="up-fname">ຄລິກເພື່ອເລືອກໄຟລ໌</div>
+          <div class="file-drop-sub" id="up-fsize">MP4, MOV, JPG, PNG, PDF, ZIP — ສູງສຸດ 500MB</div>
         </div>
+        <div id="up-progress" style="display:none;margin-top:8px">
+          <div style="background:var(--bg3);height:6px;border-radius:3px;overflow:hidden">
+            <div id="up-prog-bar" style="height:100%;background:var(--gold);width:0%;transition:width .3s"></div>
+          </div>
+          <div id="up-prog-txt" style="font-size:11px;color:var(--text3);margin-top:4px;text-align:center">ກຳລັງອັບໂຫຼດ...</div>
+        </div>
+      </div>
+      <div id="up-panel-link" class="fg" style="display:none">
+        <label>Link (Google Drive / YouTube / Vimeo / ອື່ນໆ)</label>
+        <input id="up-link" placeholder="https://drive.google.com/...">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">⚠ ໃຫ້ set permission ເປັນ "Anyone with link can view"</div>
       </div>
       <div class="fg"><label>ຜູ້ກວດ (Reviewer)</label><select id="up-reviewer"></select></div>
       <div class="fg"><label>ໝາຍເຫດ</label><textarea id="up-note" placeholder="ລາຍລະອຽດ Draft..."></textarea></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeM('m-upload')">ຍົກເລີກ</button>
-      <button class="btn btn-gold" onclick="submitDraft()">📤 ອັບໂຫຼດ & ສົ່ງກວດ</button>
+      <button class="btn btn-gold" onclick="submitDraft()" id="up-submit-btn">📤 ສົ່ງ & ກວດ</button>
     </div>
   </div>
 </div>
@@ -976,7 +1003,7 @@ function today(){return new Date().toLocaleDateString('en-CA')}
 function isLate(d){return d&&d!=='-'&&new Date(d)<new Date()}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function rnd(min,max){return Math.floor(Math.random()*(max-min+1))+min}
-function log(txt,col='#f0b429'){S.activities.unshift({text:txt,time:'ຫາກໍ',col});renderDash();}
+function log(txt,col='#f0b429'){S.activities.unshift({text:txt,time:'ຫາກໍ',col});renderDash();dbLogActivity(txt,col);}
 
 let pjSF='',empDF='',eqSF='',eqTF='',rvSearch='',rvPF='',rvTF='',rvSF='',curRV=null;
 
@@ -985,6 +1012,12 @@ let pjSF='',empDF='',eqSF='',eqTF='',rvSearch='',rvPF='',rvTF='',rvSF='',curRV=n
 // ===================================================================
 const SB_URL = 'https://abnbljsvqyoafgxwypan.supabase.co';
 const SB_KEY = 'sb_publishable_HRgI6hJhwIXq90xxBGsREQ_gMADokj-';
+const SB_BUCKET = 'lumina-drafts';
+
+// Check if we're on a client review page (?client=PROJECT_TOKEN)
+const URL_PARAMS = new URLSearchParams(window.location.search);
+const CLIENT_TOKEN = URL_PARAMS.get('client');
+const IS_CLIENT_VIEW = !!CLIENT_TOKEN;
 
 // Generic Supabase REST helper
 async function sbFetch(table, method='GET', body=null, query=''){
@@ -1021,13 +1054,13 @@ async function loadAllData(){
       sbFetch('lm_activities','GET',null,'?order=created_at.desc&limit=50'),
     ]);
     S.users      = users.map(dbToUser);
-    S.projects   = projects.map(r=>({...r.data, id:r.id}));
-    S.tasks      = tasks.map(r=>({...r.data, id:r.id}));
-    S.employees  = employees.map(r=>({...r.data, id:r.id}));
-    S.equipment  = equipment.map(r=>({...r.data, id:r.id}));
-    S.schedules  = schedules.map(r=>({...r.data, id:r.id}));
-    S.reviews    = reviews.map(r=>({...r.data, id:r.id}));
-    S.activities = activities.map(r=>r.data||r);
+    S.projects   = projects.map(r=>({...(r.data||{}), id:r.id}));
+    S.tasks      = tasks.map(r=>({...(r.data||{}), id:r.id}));
+    S.employees  = employees.map(r=>({...(r.data||{}), id:r.id}));
+    S.equipment  = equipment.map(r=>({...(r.data||{}), id:r.id}));
+    S.schedules  = schedules.map(r=>({...(r.data||{}), id:r.id}));
+    S.reviews    = reviews.map(r=>({...(r.data||{}), id:r.id}));
+    S.activities = activities.map(r=>({...(r.data||{}), id:r.id}));
   }catch(e){
     console.error('Load error:',e);
     toast('⚠ ໂຫຼດຂໍ້ມູນບໍ່ສຳເລັດ: '+e.message,'e');
@@ -1053,12 +1086,48 @@ function showLoading(on){
   el.style.display = on ? 'flex' : 'none';
 }
 
+// Supabase Storage upload
+async function uploadToStorage(file, reviewId){
+  const ext = file.name.split('.').pop();
+  const path = `${reviewId}/${Date.now()}.${ext}`;
+  const res = await fetch(`${SB_URL}/storage/v1/object/${SB_BUCKET}/${path}`, {
+    method: 'POST',
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': `Bearer ${SB_KEY}`,
+      'Content-Type': file.type,
+      'x-upsert': 'true',
+    },
+    body: file,
+  });
+  if(!res.ok){ const e=await res.text(); throw new Error('Upload failed: '+e); }
+  return `${SB_URL}/storage/v1/object/public/${SB_BUCKET}/${path}`;
+}
+
+function getFileViewUrl(url){
+  if(!url) return null;
+  // Already a full URL (Supabase or external)
+  if(url.startsWith('http')) return url;
+  return null;
+}
+
 // DB write helpers — used by all save/delete functions
 async function dbInsert(table, data){
+  // lm_users stores flat columns; others use jsonb data column
+  if(table==='lm_users') return await sbFetch(table,'POST',data);
   return await sbFetch(table,'POST',{data});
 }
-async function dbUpdate(table, id, data){
-  return await sbFetch(table,'PATCH',{data},`?id=eq.${id}`);
+async function dbUpdate(table, id, patch){
+  if(table==='lm_users') return await sbFetch(table,'PATCH',patch,`?id=eq.${id}`);
+  // For jsonb tables: fetch current data, merge patch, write back
+  try{
+    const rows = await sbFetch(table,'GET',null,`?id=eq.${id}`);
+    if(rows.length){
+      const merged = {...(rows[0].data||{}), ...patch};
+      return await sbFetch(table,'PATCH',{data:merged},`?id=eq.${id}`);
+    }
+  }catch(e){}
+  return await sbFetch(table,'PATCH',{data:patch},`?id=eq.${id}`);
 }
 async function dbDelete(table, id){
   return await sbFetch(table,'DELETE',null,`?id=eq.${id}`);
@@ -1122,6 +1191,9 @@ async function doLogin(){
 }
 document.getElementById('li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
 document.getElementById('li-user').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('li-pass').focus()});
+
+// If client review URL, init client page immediately
+if(IS_CLIENT_VIEW){ initClientPage(); }
 
 function doLogout(){
   S.me=null;
@@ -1260,6 +1332,7 @@ function renderProjects(search='',sf=''){
       <td>${statBadge(p.stat)}</td>
       <td><div style="display:flex;gap:5px">
         ${isAdmin?`
+          <button class="btn btn-blue btn-xs" onclick="genClientLink(${p.id})" title="ສ້າງ Link ລູກຄ້າ">🔗 Link</button>
           <button class="btn btn-outline btn-xs" onclick="editProject(${p.id})">✏️ ແກ້ໄຂ</button>
           <button class="btn btn-xs" style="background:var(--border2);color:var(--text2)" onclick="quickProg(${p.id})">% ອັບເດດ</button>
           <button class="btn btn-danger btn-xs" onclick="delProject(${p.id})">🗑</button>
@@ -1830,11 +1903,40 @@ function openRVDetail(id){
       </div>
       <div class="wm-badge ${r.stat==='final'?'wm-final':''}">${r.stat==='final'?'✓ FINAL':'DRAFT'}</div>`;
   } else {
-    prevEl.innerHTML=`
-      <div style="font-size:52px" id="rvd-icon">${TI[r.type]||'📁'}</div>
-      <div style="font-size:13px;font-weight:700;color:var(--text);text-align:center">${esc(r.fname)}</div>
-      <div style="font-size:11px;color:var(--text3)">${r.fsize}</div>
-      <div class="wm-badge ${r.stat==='final'?'wm-final':''}">${r.stat==='final'?'✓ FINAL':'DRAFT'}</div>`;
+    const fileUrl = r.fileUrl || r.linkUrl || null;
+    const isDraft = r.stat !== 'final';
+    let previewHtml = '';
+    if(fileUrl && r.type === 'video'){
+      // Detect YouTube/Vimeo vs direct file
+      const isYT = fileUrl.includes('youtu');
+      const isVimeo = fileUrl.includes('vimeo');
+      if(isYT){
+        const ytId = fileUrl.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1]||'';
+        previewHtml = `<div style="position:relative;width:100%;padding-top:56.25%"><iframe style="position:absolute;inset:0;width:100%;height:100%;border:none" src="https://www.youtube.com/embed/${ytId}" allowfullscreen></iframe></div>`;
+      } else if(isVimeo){
+        const vmId = fileUrl.match(/vimeo\.com\/(\d+)/)?.[1]||'';
+        previewHtml = `<div style="position:relative;width:100%;padding-top:56.25%"><iframe style="position:absolute;inset:0;width:100%;height:100%;border:none" src="https://player.vimeo.com/video/${vmId}" allowfullscreen></iframe></div>`;
+      } else {
+        previewHtml = `<video controls style="width:100%;max-height:300px;background:#000" ${isDraft?'controlslist="nodownload"':''}>
+          <source src="${fileUrl}">
+          <p>Browser ບໍ່ຮອງຮັບ — <a href="${fileUrl}" target="_blank" style="color:var(--gold)">ກົດເພື່ອເປີດ</a></p>
+        </video>`;
+      }
+    } else if(fileUrl && r.type === 'photo'){
+      previewHtml = `<img src="${fileUrl}" style="max-width:100%;max-height:300px;object-fit:contain" onerror="this.style.display='none'">`;
+    } else if(fileUrl && r.type === 'doc'){
+      previewHtml = `<div style="text-align:center;padding:20px">
+        <div style="font-size:48px">📄</div>
+        <div style="margin:10px 0;font-size:13px">${esc(r.fname||'Document')}</div>
+        <a href="${fileUrl}" target="_blank" class="btn btn-blue btn-sm">📂 ເປີດໄຟລ໌</a>
+      </div>`;
+    } else {
+      // No file uploaded yet — show icon placeholder
+      previewHtml = `<div style="font-size:52px">${TI[r.type]||'📁'}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);text-align:center">${esc(r.fname||'-')}</div>
+        <div style="font-size:11px;color:var(--text3)">${r.fsize||''}</div>`;
+    }
+    prevEl.innerHTML = previewHtml + `<div class="wm-badge ${r.stat==='final'?'wm-final':''}" style="position:absolute;bottom:8px;right:8px">${r.stat==='final'?'✓ FINAL':'DRAFT'}</div>`;
   }
 
   // Steps bar
@@ -1879,11 +1981,15 @@ function openRVDetail(id){
 
   // Footer actions — permission based
   let fb='<button class="btn btn-outline" onclick="closeM(\'m-rv-detail\')">ປິດ</button>';
+  const rProj=S.projects.find(p=>p.name===r.proj);
+  if(rProj&&S.me&&S.me.role==='admin'){
+    fb+=`<button class="btn btn-blue btn-sm" onclick="closeM('m-rv-detail');genClientLink(${rProj.id})">🔗 Link ລູກຄ້າ</button>`;
+  }
   if(canAct){
     if(r.stat==='draft'||r.stat==='reviewing'){
       fb+=`<button class="btn btn-danger" onclick="rejectRV(${r.id})">❌ ຂໍແກ້ໄຂ</button>`;
       fb+=`<button class="btn btn-success" onclick="approveRV(${r.id})">✅ ອະນຸມັດ</button>`;
-    }else if(r.stat==='approved'&&S.me.role==='admin'){
+    }else if(r.stat==='approved'&&S.me&&S.me.role==='admin'){
       fb+=`<button class="btn btn-gold" onclick="promoteToFinal(${r.id});closeM('m-rv-detail')">📦 ສ້າງ Final</button>`;
     }else if(r.stat==='final'){
       fb+=`<button class="btn btn-success" onclick="closeM('m-rv-detail');openClientLink(${r.id})">🔗 ລິ້ງລູກຄ້າ</button>`;
@@ -1950,9 +2056,23 @@ async function promoteToFinal(id){
   renderReview();toast('📦 Final ສຳເລັດ! ລູກຄ້າດາວໂຫລດໄດ້ ✓');
 }
 
+// Upload tab toggle
+function setUploadTab(tab){
+  const isFile = tab==='file';
+  document.getElementById('up-panel-file').style.display = isFile?'':'none';
+  document.getElementById('up-panel-link').style.display = isFile?'none':'';
+  document.getElementById('up-tab-file').style.background = isFile?'var(--gold)':'var(--bg3)';
+  document.getElementById('up-tab-file').style.color = isFile?'#0c0f14':'var(--text2)';
+  document.getElementById('up-tab-link').style.background = isFile?'var(--bg3)':'var(--gold)';
+  document.getElementById('up-tab-link').style.color = isFile?'var(--text2)':'#0c0f14';
+}
+function toggleUploadMode(){} // placeholder
+
+let _upFile=null;
 function previewFile(input){
   if(!input.files[0])return;
-  const f=input.files[0];
+  _upFile=input.files[0];
+  const f=_upFile;
   const ext=f.name.split('.').pop().toLowerCase();
   const ic=['mp4','mov','avi','mkv'].includes(ext)?'🎬':['jpg','jpeg','png','zip'].includes(ext)?'📸':'📄';
   document.getElementById('up-icon').textContent=ic;
@@ -1964,15 +2084,82 @@ async function submitDraft(){
   const title=document.getElementById('up-title').value.trim();
   if(!title){toast('ໃສ່ຊື່ Draft ກ່ອນ','e');return}
   const type=document.getElementById('up-type').value;
-  const ext={video:'mp4',photo:'zip',doc:'pdf'}[type]||'mp4';
-  const r={title,proj:document.getElementById('up-proj').value||'-',type,stat:'draft',ver:document.getElementById('up-ver').value,fname:title.replace(/\s/g,'_')+'.'+ext,fsize:rnd(100,1900)+' MB',by:S.me?S.me.name:'Staff',reviewer:document.getElementById('up-reviewer').value||'-',at:today(),note:document.getElementById('up-note').value||'-',versions:[{label:document.getElementById('up-ver').value,stat:'draft',date:today()}],comments:[]};
+  const useLink = document.getElementById('up-panel-link').style.display!=='none';
+  const linkVal = document.getElementById('up-link')?document.getElementById('up-link').value.trim():'';
+  const file = _upFile;
+
+  if(!useLink && !file){ toast('ເລືອກໄຟລ໌ ຫຼື ໃສ່ Link ກ່ອນ','e'); return; }
+  if(useLink && !linkVal){ toast('ໃສ່ Link ກ່ອນ','e'); return; }
+
+  const ver=document.getElementById('up-ver').value;
+  const r={
+    title, proj:document.getElementById('up-proj').value||'-', type,
+    stat:'draft', ver, fname:file?file.name:(linkVal.split('/').pop()||title),
+    fsize:file?(file.size/1024/1024).toFixed(1)+' MB':'Link',
+    by:S.me?S.me.name:'Staff',
+    reviewer:document.getElementById('up-reviewer').value||'-',
+    at:today(), note:document.getElementById('up-note').value||'-',
+    versions:[{label:ver,stat:'draft',date:today()}],
+    comments:[], fileUrl:'', linkUrl: useLink?linkVal:'',
+    clientToken: Math.random().toString(36).substr(2,10),
+  };
+
+  const btn=document.getElementById('up-submit-btn');
+  btn.disabled=true; btn.textContent='ກຳລັງບັນທຶກ...';
+
   try{
+    // Insert first to get ID
     const res=await dbInsert('lm_reviews',r);
-    r.id=res[0].id;S.reviews.unshift(r);
+    r.id=res[0].id;
+
+    // Upload file if selected
+    if(!useLink && file){
+      document.getElementById('up-progress').style.display='';
+      const url = await uploadWithProgress(file, r.id);
+      r.fileUrl = url;
+      await dbUpdate('lm_reviews', r.id, {fileUrl: url});
+      document.getElementById('up-progress').style.display='none';
+    }
+
+    S.reviews.unshift(r);
     dbLogActivity('ອັບໂຫຼດ Draft: "'+title+'"','#06b6d4');
     closeM('m-upload');renderReview();toast('ອັບໂຫຼດ "'+title+'" ສຳເລັດ ✓');
     ['up-title','up-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
-  }catch(e){toast('❌ '+e.message,'e');}
+    _upFile=null;
+  }catch(e){
+    toast('❌ '+e.message,'e');
+  }finally{
+    btn.disabled=false; btn.textContent='📤 ສົ່ງ & ກວດ';
+  }
+}
+
+async function uploadWithProgress(file, reviewId){
+  return new Promise(async(resolve,reject)=>{
+    const ext=file.name.split('.').pop();
+    const path=`${reviewId}/${Date.now()}.${ext}`;
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST',`${SB_URL}/storage/v1/object/${SB_BUCKET}/${path}`);
+    xhr.setRequestHeader('apikey',SB_KEY);
+    xhr.setRequestHeader('Authorization','Bearer '+SB_KEY);
+    xhr.setRequestHeader('Content-Type',file.type||'application/octet-stream');
+    xhr.setRequestHeader('x-upsert','true');
+    xhr.upload.onprogress=e=>{
+      if(e.lengthComputable){
+        const pct=Math.round(e.loaded/e.total*100);
+        document.getElementById('up-prog-bar').style.width=pct+'%';
+        document.getElementById('up-prog-txt').textContent='ກຳລັງອັບໂຫຼດ '+pct+'%...';
+      }
+    };
+    xhr.onload=()=>{
+      if(xhr.status<300){
+        resolve(`${SB_URL}/storage/v1/object/public/${SB_BUCKET}/${path}`);
+      } else {
+        reject(new Error('Upload failed: '+xhr.responseText));
+      }
+    };
+    xhr.onerror=()=>reject(new Error('Network error'));
+    xhr.send(file);
+  });
 }
 
 // Client link
@@ -2190,6 +2377,186 @@ async function saveProfile(){
 }
 
 // ===================================================================
+// CLIENT REVIEW PAGE
+// ===================================================================
+async function initClientPage(){
+  // Hide login, show client page
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('clientPage').style.display='block';
+
+  const content = document.getElementById('cl-page-content');
+  content.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">ກຳລັງໂຫຼດ...</div>';
+
+  try{
+    // Load reviews with matching clientToken
+    const rows = await sbFetch('lm_reviews','GET',null,'?order=id');
+    const allReviews = rows.map(r=>({...r.data, id:r.id}));
+
+    // Find by project clientToken (stored in project data)
+    // CLIENT_TOKEN format: proj_PROJID or direct review token
+    let drafts = [];
+    let projName = '';
+
+    // Try as project token
+    const projRows = await sbFetch('lm_projects','GET',null,'?order=id');
+    const projects = projRows.map(r=>({...r.data,id:r.id}));
+    const proj = projects.find(p=>p.clientToken===CLIENT_TOKEN);
+
+    if(proj){
+      projName = proj.name;
+      drafts = allReviews.filter(r=>r.proj===proj.name);
+    } else {
+      // Try as individual review token
+      drafts = allReviews.filter(r=>r.clientToken===CLIENT_TOKEN);
+      if(drafts.length) projName = drafts[0].proj;
+    }
+
+    if(!drafts.length){
+      content.innerHTML='<div style="text-align:center;padding:60px 20px"><div style="font-size:48px;margin-bottom:16px">🔒</div><div style="color:var(--text2);font-size:16px">Link ບໍ່ຖືກຕ້ອງ ຫຼື ຫົວຂໍ້ນີ້ຍັງບໍ່ມີ Draft</div></div>';
+      return;
+    }
+
+    let html = `
+      <div style="margin-bottom:24px">
+        <div style="font-size:11px;color:var(--text3);letter-spacing:1px;margin-bottom:6px">ໂປຣເຈັກ</div>
+        <div style="font-size:20px;font-weight:700;color:var(--text)">${esc(projName)}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">${drafts.length} Draft ທັງໝົດ</div>
+      </div>`;
+
+    drafts.forEach(r=>{
+      const SM2={draft:'ລໍຖ້າກວດ',reviewing:'ກຳລັງກວດ',approved:'Approved ✓',final:'Final ✅'};
+      const SC={draft:'#f0b429',reviewing:'#3b82f6',approved:'#22c55e',final:'#a855f7'};
+      const fileUrl = r.fileUrl||r.linkUrl||'';
+
+      let previewHtml = '';
+      if(fileUrl && r.type==='video'){
+        const isYT=fileUrl.includes('youtu');
+        const isVimeo=fileUrl.includes('vimeo');
+        if(isYT){
+          const ytId=fileUrl.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1]||'';
+          previewHtml=`<div style="position:relative;padding-top:56.25%;margin-bottom:16px"><iframe style="position:absolute;inset:0;width:100%;height:100%;border:none" src="https://www.youtube.com/embed/${ytId}" allowfullscreen></iframe></div>`;
+        } else if(isVimeo){
+          const vmId=fileUrl.match(/vimeo\.com\/(\d+)/)?.[1]||'';
+          previewHtml=`<div style="position:relative;padding-top:56.25%;margin-bottom:16px"><iframe style="position:absolute;inset:0;width:100%;height:100%;border:none" src="https://player.vimeo.com/video/${vmId}" allowfullscreen></iframe></div>`;
+        } else {
+          previewHtml=`<video controls controlslist="nodownload" style="width:100%;max-height:400px;background:#000;margin-bottom:16px"><source src="${fileUrl}"><p>ໃຊ້ <a href="${fileUrl}" target="_blank">link ນີ້</a> ເພື່ອເປີດ</p></video>`;
+        }
+      } else if(fileUrl && r.type==='photo'){
+        previewHtml=`<img src="${fileUrl}" style="max-width:100%;max-height:400px;object-fit:contain;margin-bottom:16px;display:block;margin-left:auto;margin-right:auto">`;
+      } else if(fileUrl && r.type==='doc'){
+        previewHtml=`<div style="text-align:center;padding:24px;margin-bottom:16px;background:var(--bg3)"><div style="font-size:44px">📄</div><div style="margin:10px 0">${esc(r.fname||'Document')}</div><a href="${fileUrl}" target="_blank" style="color:var(--gold)">📂 ເປີດໄຟລ໌</a></div>`;
+      } else {
+        previewHtml=`<div style="text-align:center;padding:24px;color:var(--text3);margin-bottom:16px">${TI[r.type]||'📁'} ${esc(r.fname||'ຍັງບໍ່ໄດ້ອັບໂຫຼດ')}</div>`;
+      }
+
+      const cmts = (r.comments||[]).map(c=>`
+        <div style="display:flex;gap:10px;margin-bottom:12px;align-items:flex-start">
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(59,130,246,.2);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">${c.av||'?'}</div>
+          <div style="flex:1;background:var(--bg3);padding:10px 14px">
+            <div style="font-size:12px;font-weight:700;margin-bottom:4px">${esc(c.author)} <span style="font-size:10px;color:var(--text3);font-weight:400">${c.time}</span></div>
+            <div style="font-size:13px">${esc(c.text)}</div>
+          </div>
+        </div>`).join('');
+
+      html += `
+      <div class="cl-draft-card" id="clcard-${r.id}">
+        <div class="cl-draft-hdr">
+          <div>
+            <div style="font-weight:700;font-size:15px">${esc(r.title)}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">${r.ver} · ${r.at}</div>
+          </div>
+          <span style="background:rgba(0,0,0,.3);color:${SC[r.stat]||'#fff'};padding:5px 12px;font-size:11px;font-family:'Space Mono',monospace;border:1px solid ${SC[r.stat]||'var(--border)'}">${SM2[r.stat]||r.stat}</span>
+        </div>
+        <div class="cl-draft-body">
+          ${previewHtml}
+          ${r.note&&r.note!=='-'?`<div style="background:var(--bg3);padding:12px 16px;margin-bottom:16px;font-size:13px;border-left:3px solid var(--gold)"><div style="font-size:10px;color:var(--text3);margin-bottom:4px">ໝາຍເຫດ</div>${esc(r.note)}</div>`:''}
+          ${cmts?`<div style="margin-bottom:16px">${cmts}</div>`:''}
+          ${r.stat!=='final'?`
+          <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:16px">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:10px">ສົ່ງ Feedback</div>
+            <input class="cl-name-input" id="clname-${r.id}" placeholder="ຊື່ຂອງທ່ານ *">
+            <textarea class="cl-cmt-area" id="clcmt-${r.id}" placeholder="ຄຳຄິດເຫັນ / ລາຍການທີ່ຕ້ອງແກ້ໄຂ..."></textarea>
+            <div class="cl-action-row">
+              <button class="btn btn-gold" onclick="clientComment(${r.id})">💬 ສົ່ງ Comment</button>
+              <button class="btn btn-success" onclick="clientApprove(${r.id})">✅ ອະນຸມັດ Draft ນີ້</button>
+              <button class="btn btn-danger btn-sm" onclick="clientRevision(${r.id})">✏ ຂໍແກ້ໄຂ</button>
+            </div>
+          </div>`:`<div style="text-align:center;padding:16px;color:var(--green);font-weight:700">✅ Final ອະນຸມັດແລ້ວ</div>`}
+        </div>
+      </div>`;
+    });
+
+    content.innerHTML = html;
+  }catch(e){
+    content.innerHTML='<div style="text-align:center;padding:40px;color:var(--red)">❌ ໂຫຼດບໍ່ສຳເລັດ: '+e.message+'</div>';
+  }
+}
+
+async function clientComment(reviewId){
+  const name = document.getElementById('clname-'+reviewId)?.value.trim();
+  const txt = document.getElementById('clcmt-'+reviewId)?.value.trim();
+  if(!name){alert('ກະລຸນາໃສ່ຊື່ກ່ອນ');return}
+  if(!txt){alert('ກະລຸນາໃສ່ Comment');return}
+  await _clientAddComment(reviewId, name, txt, 'general');
+  toast('ສົ່ງ Comment ສຳເລັດ ✓');
+  setTimeout(()=>initClientPage(), 800);
+}
+
+async function clientApprove(reviewId){
+  const name = document.getElementById('clname-'+reviewId)?.value.trim()||'ລູກຄ້າ';
+  if(!confirm('ຢືນຢັນ Approve Draft ນີ້?'))return;
+  await _clientAddComment(reviewId, name, '✅ ລູກຄ້າ Approved Draft ນີ້', 'approve', 'approved');
+  toast('Approved ສຳເລັດ!');
+  setTimeout(()=>initClientPage(), 800);
+}
+
+async function clientRevision(reviewId){
+  const name = document.getElementById('clname-'+reviewId)?.value.trim()||'ລູກຄ້າ';
+  const txt = document.getElementById('clcmt-'+reviewId)?.value.trim();
+  if(!txt){alert('ໃສ່ລາຍການທີ່ຕ້ອງແກ້ໄຂກ່ອນ');return}
+  await _clientAddComment(reviewId, name, txt, 'revision', 'reviewing');
+  toast('ສົ່ງຄຳຂໍແກ້ໄຂ ✓');
+  setTimeout(()=>initClientPage(), 800);
+}
+
+async function _clientAddComment(reviewId, author, text, type, newStat=null){
+  const rows = await sbFetch('lm_reviews','GET',null,`?id=eq.${reviewId}`);
+  if(!rows.length) return;
+  const r = {...rows[0].data, id:rows[0].id};
+  if(!r.comments) r.comments=[];
+  r.comments.push({id:uid(),author,av:author.charAt(0).toUpperCase(),col:'#3b82f6',type,text,time:now()});
+  const patch = {comments:r.comments};
+  if(newStat) patch.stat=newStat;
+  await dbUpdate('lm_reviews', reviewId, patch);
+}
+
+// Generate client link for project
+function genClientLink(projId){
+  const p = S.projects.find(x=>x.id==projId);
+  if(!p) return;
+  // Generate token if not exists
+  if(!p.clientToken){
+    p.clientToken = 'proj_'+Math.random().toString(36).substr(2,10);
+    dbUpdate('lm_projects', projId, {clientToken:p.clientToken});
+  }
+  const link = window.location.origin + window.location.pathname + '?client=' + p.clientToken;
+  // Show link modal
+  const modal = document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);padding:32px;max-width:500px;width:90%;position:relative">
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px">🔗 Link ກວດວຽກລູກຄ້າ</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:16px">ໂປຣເຈັກ: ${esc(p.name)}</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <input value="${link}" readonly onclick="this.select()" style="flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--gold);padding:10px;font-size:12px;font-family:'Space Mono',monospace;outline:none">
+      <button onclick="navigator.clipboard.writeText('${link}');this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy',1500)" style="background:var(--gold);border:none;color:#0c0f14;padding:10px 16px;cursor:pointer;font-weight:700">Copy</button>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:16px">ລູກຄ້າຈະເຫັນ Draft ທັງໝົດຂອງ Project ນີ້ ແລະ Comment/Approve ໄດ້</div>
+    <button onclick="this.closest('[style]').remove()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text2);padding:8px 20px;cursor:pointer;width:100%">ປິດ</button>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+// ===================================================================
 // BADGE HELPERS
 // ===================================================================
 function statBadge(s){const M={ກຳລັງດຳເນີນ:'bg-blue',ສຳເລັດ:'bg-green',ວາງແຜນ:'bg-gold',ຍົກເລີກ:'bg-red'};return`<span class="badge ${M[s]||'bg-gray'}">${esc(s)}</span>`}
@@ -2210,5 +2577,17 @@ function toast(msg,type='s'){
   _tt=setTimeout(()=>T.classList.remove('show'),3200);
 }
 </script>
+<!-- ===== CLIENT REVIEW PAGE ===== -->
+<div id="clientPage" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:2000;overflow-y:auto">
+  <div style="max-width:780px;margin:0 auto;padding:24px 16px">
+    <!-- Header -->
+    <div style="text-align:center;padding:32px 0 24px;border-bottom:1px solid var(--border);margin-bottom:28px">
+      <div style="font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--gold);letter-spacing:4px;margin-bottom:4px">LUMINA</div>
+      <div style="font-size:11px;color:var(--text3);letter-spacing:2px">CLIENT REVIEW PORTAL</div>
+    </div>
+    <div id="cl-page-content"></div>
+  </div>
+</div>
+
 </body>
 </html>
