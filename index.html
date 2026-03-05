@@ -348,7 +348,11 @@ tbody tr:last-child td{border-bottom:none}
 .empty-icon{font-size:36px;margin-bottom:12px}
 
 @media(max-width:900px){
-  #sidebar{display:none}
+  #sidebar{position:fixed;left:-260px;top:0;bottom:0;z-index:500;transition:left .25s ease;box-shadow:none}
+  #sidebar.open{left:0;box-shadow:4px 0 24px rgba(0,0,0,.6)}
+  #sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:499}
+  #sb-overlay.show{display:block}
+  #hamburger{display:block!important}
   .stats-row{grid-template-columns:1fr 1fr}
   .g2,.g3{grid-template-columns:1fr}
   .kanban{grid-template-columns:repeat(2,260px)}
@@ -356,6 +360,13 @@ tbody tr:last-child td{border-bottom:none}
   .pipe-step{min-width:50%}
   .split{grid-template-columns:1fr}
   .split-pane:first-child{border-right:none;border-bottom:1px solid var(--border)}
+}
+@media(max-width:500px){
+  .stats-row{grid-template-columns:1fr}
+  .kanban{grid-template-columns:1fr}
+  .tbl-wrap{font-size:12px}
+  .modal{width:95vw;max-width:95vw}
+  .topbar{padding:10px 14px}
 }
 </style>
 </head>
@@ -414,12 +425,18 @@ tbody tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<!-- ===== SIDEBAR OVERLAY (mobile) ===== -->
+<div id="sb-overlay" onclick="toggleSidebar()"></div>
+
 <!-- ===== MAIN ===== -->
 <div id="main" style="display:none">
   <div class="topbar">
-    <div>
-      <div class="topbar-title" id="pgTitle">Dashboard</div>
-      <div class="topbar-sub" id="pgSub">ພາບລວມຂອງບໍລິສັດ</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button id="hamburger" onclick="toggleSidebar()" style="display:none;background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px 8px;line-height:1">☰</button>
+      <div>
+        <div class="topbar-title" id="pgTitle">Dashboard</div>
+        <div class="topbar-sub" id="pgSub">ພາບລວມຂອງບໍລິສັດ</div>
+      </div>
     </div>
     <div class="topbar-right">
       <div class="topbar-time" id="clk"></div>
@@ -959,32 +976,149 @@ function today(){return new Date().toLocaleDateString('en-CA')}
 function isLate(d){return d&&d!=='-'&&new Date(d)<new Date()}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function rnd(min,max){return Math.floor(Math.random()*(max-min+1))+min}
-function log(txt,col='#f0b429'){S.activities.unshift({text:txt,time:'ຫາກໍ',col});renderDash()}
+function log(txt,col='#f0b429'){S.activities.unshift({text:txt,time:'ຫາກໍ',col});renderDash();}
 
 let pjSF='',empDF='',eqSF='',eqTF='',rvSearch='',rvPF='',rvTF='',rvSF='',curRV=null;
 
 // ===================================================================
-// AUTH
+// SUPABASE CONFIG
 // ===================================================================
-function doLogin(){
+const SB_URL = 'https://abnbljsvqyoafgxwypan.supabase.co';
+const SB_KEY = 'sb_publishable_HRgI6hJhwIXq90xxBGsREQ_gMADokj-';
+
+// Generic Supabase REST helper
+async function sbFetch(table, method='GET', body=null, query=''){
+  const url = `${SB_URL}/rest/v1/${table}${query}`;
+  const headers = {
+    'apikey': SB_KEY,
+    'Authorization': `Bearer ${SB_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': method==='POST' ? 'return=representation' : method==='PATCH'||method==='PUT' ? 'return=representation' : '',
+  };
+  const res = await fetch(url, {method, headers, body: body ? JSON.stringify(body) : null});
+  if(!res.ok){ const err=await res.text(); throw new Error(`${method} ${table}: ${err}`); }
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+// Load all tables from Supabase into S
+async function saveState(){
+  // saveState is now a no-op — all writes go directly to Supabase
+  // Individual save functions handle their own DB calls
+}
+
+async function loadAllData(){
+  showLoading(true);
+  try{
+    const [users,projects,tasks,employees,equipment,schedules,reviews,activities] = await Promise.all([
+      sbFetch('lm_users','GET',null,'?order=id'),
+      sbFetch('lm_projects','GET',null,'?order=id'),
+      sbFetch('lm_tasks','GET',null,'?order=id'),
+      sbFetch('lm_employees','GET',null,'?order=id'),
+      sbFetch('lm_equipment','GET',null,'?order=id'),
+      sbFetch('lm_schedules','GET',null,'?order=id'),
+      sbFetch('lm_reviews','GET',null,'?order=id'),
+      sbFetch('lm_activities','GET',null,'?order=created_at.desc&limit=50'),
+    ]);
+    S.users      = users.map(dbToUser);
+    S.projects   = projects.map(r=>({...r.data, id:r.id}));
+    S.tasks      = tasks.map(r=>({...r.data, id:r.id}));
+    S.employees  = employees.map(r=>({...r.data, id:r.id}));
+    S.equipment  = equipment.map(r=>({...r.data, id:r.id}));
+    S.schedules  = schedules.map(r=>({...r.data, id:r.id}));
+    S.reviews    = reviews.map(r=>({...r.data, id:r.id}));
+    S.activities = activities.map(r=>r.data||r);
+  }catch(e){
+    console.error('Load error:',e);
+    toast('⚠ ໂຫຼດຂໍ້ມູນບໍ່ສຳເລັດ: '+e.message,'e');
+  }finally{
+    showLoading(false);
+  }
+}
+
+function dbToUser(r){ return {id:r.id, name:r.name, uname:r.username, pass:r.pass, role:r.role, status:r.status}; }
+
+function showLoading(on){
+  let el=document.getElementById('loadingOverlay');
+  if(!el){
+    el=document.createElement('div');
+    el.id='loadingOverlay';
+    el.style.cssText='position:fixed;inset:0;background:rgba(12,15,20,.85);z-index:9998;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px';
+    el.innerHTML='<div style="width:40px;height:40px;border:3px solid rgba(240,180,41,.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite"></div><div style="color:var(--text2);font-size:13px">ກຳລັງໂຫຼດຂໍ້ມູນ...</div>';
+    document.body.appendChild(el);
+    const style=document.createElement('style');
+    style.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(style);
+  }
+  el.style.display = on ? 'flex' : 'none';
+}
+
+// DB write helpers — used by all save/delete functions
+async function dbInsert(table, data){
+  return await sbFetch(table,'POST',{data});
+}
+async function dbUpdate(table, id, data){
+  return await sbFetch(table,'PATCH',{data},`?id=eq.${id}`);
+}
+async function dbDelete(table, id){
+  return await sbFetch(table,'DELETE',null,`?id=eq.${id}`);
+}
+async function dbUpsertUser(obj){
+  if(obj.id){
+    return await sbFetch('lm_users','PATCH',{name:obj.name,username:obj.uname,pass:obj.pass,role:obj.role,status:obj.status},`?id=eq.${obj.id}`);
+  } else {
+    return await sbFetch('lm_users','POST',{name:obj.name,username:obj.uname,pass:obj.pass,role:obj.role,status:obj.status});
+  }
+}
+async function dbLogActivity(text, col='#f0b429'){
+  try{ await sbFetch('lm_activities','POST',{data:{text,col,time:'ຫາກໍ'}}); }catch(e){}
+}
+
+// ===================================================================
+// MOBILE SIDEBAR
+// ===================================================================
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('sb-overlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sb-overlay').classList.remove('show');
+}
+
+async function doLogin(){
   const u=document.getElementById('li-user').value.trim();
   const p=document.getElementById('li-pass').value;
-  const user=S.users.find(x=>x.uname===u&&x.pass===p&&x.status==='Active');
-  if(!user){document.getElementById('loginErr').textContent='ຊື່ຜູ້ໃຊ້ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກ';return}
-  S.me=user;
-  document.getElementById('loginErr').textContent='';
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('main').style.display='flex';
-  document.getElementById('sbAv').textContent=user.name.charAt(0);
-  document.getElementById('sbName').textContent=user.name;
-  document.getElementById('sbRole').textContent=user.role==='admin'?'ຜູ້ດູແລລະບົບ':'ພະນັກງານ';
-  document.getElementById('sbBadge').textContent=user.role.toUpperCase();
-  if(user.role!=='admin'){
-    document.getElementById('adminNav').style.display='none';
-    const b=document.getElementById('btn-addEmp');if(b)b.style.display='none';
+  const errEl=document.getElementById('loginErr');
+  errEl.textContent='ກຳລັງກວດສອບ...';
+  try{
+    // Load users from Supabase
+    const rows = await sbFetch('lm_users','GET',null,`?username=eq.${encodeURIComponent(u)}&status=eq.Active`);
+    if(!rows.length){errEl.textContent='ຊື່ຜູ້ໃຊ້ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກ';return}
+    const dbUser = rows[0];
+    if(dbUser.pass !== p){errEl.textContent='ຊື່ຜູ້ໃຊ້ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກ';return}
+    const user = dbToUser(dbUser);
+    S.me = user;
+    errEl.textContent='';
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('main').style.display='flex';
+    document.getElementById('sbAv').textContent=user.name.charAt(0);
+    document.getElementById('sbName').textContent=user.name;
+    document.getElementById('sbRole').textContent=user.role==='admin'?'ຜູ້ດູແລລະບົບ':'ພະນັກງານ';
+    document.getElementById('sbBadge').textContent=user.role.toUpperCase();
+    if(user.role!=='admin'){
+      document.getElementById('adminNav').style.display='none';
+      const b=document.getElementById('btn-addEmp');if(b)b.style.display='none';
+    } else {
+      document.getElementById('adminNav').style.display='';
+    }
+    await initApp();
+    toast('ຍິນດີຕ້ອນຮັບ '+user.name+' ✓');
+  }catch(e){
+    errEl.textContent='ເຊື່ອມຕໍ່ບໍ່ໄດ້: '+e.message;
   }
-  initApp();
-  toast('ຍິນດີຕ້ອນຮັບ '+user.name+' ✓');
 }
 document.getElementById('li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
 document.getElementById('li-user').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('li-pass').focus()});
@@ -993,9 +1127,10 @@ function doLogout(){
   S.me=null;
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('main').style.display='none';
-  document.getElementById('li-user').value='admin';
-  document.getElementById('li-pass').value='1234';
+  document.getElementById('li-user').value='';
+  document.getElementById('li-pass').value='';
   document.getElementById('loginErr').textContent='';
+  closeSidebar();
 }
 
 // ===================================================================
@@ -1012,13 +1147,15 @@ function goTo(name){
   document.getElementById('pgSub').textContent=pg.s;
   const renders={projects:renderProjects,tasks:renderKanban,review:renderReview,delivery:renderDelivery,employees:renderEmps,equipment:renderEquip,schedule:renderSched,reports:renderReports,admin:renderAdmin,dashboard:renderDash};
   if(renders[name])renders[name]();
+  closeSidebar();
 }
 
 // ===================================================================
 // INIT
 // ===================================================================
-function initApp(){
+async function initApp(){
   setInterval(()=>{document.getElementById('clk').textContent=new Date().toLocaleTimeString('lo-LA')},1000);
+  await loadAllData();
   goTo('dashboard');
 }
 
@@ -1131,15 +1268,18 @@ function renderProjects(search='',sf=''){
     </tr>`).join(''):`<tr><td colspan="9"><div class="empty"><div class="empty-icon">🎬</div>ບໍ່ພົບໂປຣເຈັກ</div></td></tr>`;
 }
 
-function saveProject(){
+async function saveProject(){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເພີ່ມ/ແກ້ໄຂໂປຣເຈັກໄດ້','e');return}
   const id=document.getElementById('pj-id').value;
   const n=document.getElementById('pj-name').value.trim();
   if(!n){toast('ກະລຸນາໃສ່ຊື່ໂປຣເຈັກ','e');return}
   const obj={name:n,client:document.getElementById('pj-client').value||'-',type:document.getElementById('pj-type').value,dead:document.getElementById('pj-dead').value||'-',stat:document.getElementById('pj-stat').value,team:document.getElementById('pj-team').value||'-',prog:parseInt(document.getElementById('pj-prog').value)||0,note:document.getElementById('pj-note').value};
-  if(id){const p=S.projects.find(x=>x.id==id);if(p)Object.assign(p,obj);log('ແກ້ໄຂໂປຣເຈັກ: '+n)}
-  else{obj.id=uid();S.projects.push(obj);log('ເພີ່ມໂປຣເຈັກ: '+n,'#06b6d4')}
-  closeM('m-proj');renderProjects(pjSF);toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ສຳເລັດ ✓');
+  try{
+    if(id){await dbUpdate('lm_projects',id,obj);const p=S.projects.find(x=>x.id==id);if(p)Object.assign(p,obj);}
+    else{const r=await dbInsert('lm_projects',obj);obj.id=r[0].id;S.projects.push(obj);}
+    dbLogActivity((id?'ແກ້ໄຂ':'ເພີ່ມ')+'ໂປຣເຈັກ: '+n,'#06b6d4');
+    closeM('m-proj');renderProjects(pjSF);toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ສຳເລັດ ✓');
+  }catch(e){toast('❌ ບໍ່ສຳເລັດ: '+e.message,'e');}
 }
 
 function editProject(id){
@@ -1157,21 +1297,22 @@ function editProject(id){
   openM('m-proj');
 }
 
-function quickProg(id){
+async function quickProg(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເຮັດໄດ້','e');return}
   const p=S.projects.find(x=>x.id===id);if(!p)return;
   const v=prompt('ຄວາມຄືບໜ້າ "'+p.name+'" (0-100):',p.prog);
   if(v===null)return;
   p.prog=Math.min(100,Math.max(0,parseInt(v)||0));
   if(p.prog===100)p.stat='ສຳເລັດ';
-  renderProjects(pjSF);renderDash();toast('ອັບເດດ '+p.prog+'%');
+  try{await dbUpdate('lm_projects',id,{prog:p.prog,stat:p.stat});renderProjects(pjSF);renderDash();toast('ອັບເດດ '+p.prog+'%');}
+  catch(e){toast('❌ '+e.message,'e');}
 }
 
-function delProject(id){
+async function delProject(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ລົບໄດ້','e');return}
   if(!confirm('ລົບໂປຣເຈັກນີ້?'))return;
-  S.projects=S.projects.filter(x=>x.id!==id);
-  renderProjects();renderDash();toast('ລົບສຳເລັດ');
+  try{await dbDelete('lm_projects',id);S.projects=S.projects.filter(x=>x.id!==id);renderProjects();renderDash();toast('ລົບສຳເລັດ');}
+  catch(e){toast('❌ '+e.message,'e');}
 }
 
 // ===================================================================
@@ -1224,27 +1365,29 @@ function renderKanban(){
   }).join('');
 }
 
-function updateMyTaskProg(id,val){
+async function updateMyTaskProg(id,val){
   const t=S.tasks.find(x=>x.id===id);
   if(!t)return;
   if(S.me&&S.me.role!=='admin'&&t.assign!==S.me.name){toast('⛔ ອັບເດດໄດ້ສະເພາະວຽກຂອງຕົວເອງ','e');return}
-  t.prog=val;
-  if(val>=100)t.stat='done';
+  t.prog=val;if(val>=100)t.stat='done';
   updateBadges();renderDash();
-  toast('ອັບເດດວຽກ "'+t.name+'" → '+val+'% ✓');
+  try{await dbUpdate('lm_tasks',id,{prog:val,stat:t.stat});toast('ອັບເດດວຽກ "'+t.name+'" → '+val+'% ✓');}
+  catch(e){toast('❌ '+e.message,'e');}
 }
 
 function noPermToast(){toast('⛔ ສິດ Staff: ອັບເດດ % ວຽກຕົວເອງເທົ່ານັ້ນ','e')}
 
-function saveTask(){
+async function saveTask(){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ສາມາດເພີ່ມ/ແກ້ໄຂວຽກໄດ້','e');return}
   const id=document.getElementById('tk-id').value;
   const n=document.getElementById('tk-name').value.trim();
   if(!n){toast('ກະລຸນາໃສ່ຊື່ວຽກ','e');return}
   const obj={name:n,proj:document.getElementById('tk-proj').value||'-',assign:document.getElementById('tk-assign').value||'-',pri:document.getElementById('tk-pri').value,due:document.getElementById('tk-due').value||'-',stat:document.getElementById('tk-stat').value,prog:0};
-  if(id){const t=S.tasks.find(x=>x.id==id);if(t)Object.assign(t,obj);log('ແກ້ໄຂວຽກ: '+n)}
-  else{obj.id=uid();S.tasks.push(obj);log('ເພີ່ມວຽກ: '+n,'#3b82f6')}
-  closeM('m-task');renderKanban();updateBadges();toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ✓');
+  try{
+    if(id){await dbUpdate('lm_tasks',id,obj);const t=S.tasks.find(x=>x.id==id);if(t)Object.assign(t,obj);}
+    else{const r=await dbInsert('lm_tasks',obj);obj.id=r[0].id;S.tasks.push(obj);}
+    closeM('m-task');renderKanban();updateBadges();toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ✓');
+  }catch(e){toast('❌ '+e.message,'e');}
 }
 
 function editTask(id){
@@ -1259,14 +1402,18 @@ function editTask(id){
   openM('m-task');
 }
 
-function moveTask(id,stat){
+async function moveTask(id,stat){
   const t=S.tasks.find(x=>x.id===id);
-  if(t){t.stat=stat;renderKanban();updateBadges();toast('ຍ້າຍ → '+KB_COLS.find(c=>c.k===stat).l);}
+  if(t){
+    t.stat=stat;renderKanban();updateBadges();
+    try{await dbUpdate('lm_tasks',id,{stat});toast('ຍ້າຍ → '+KB_COLS.find(c=>c.k===stat).l);}
+    catch(e){toast('❌ '+e.message,'e');}
+  }
 }
 
-function delTask(id){
-  S.tasks=S.tasks.filter(x=>x.id!==id);
-  renderKanban();updateBadges();toast('ລົບວຽກສຳເລັດ');
+async function delTask(id){
+  try{await dbDelete('lm_tasks',id);S.tasks=S.tasks.filter(x=>x.id!==id);renderKanban();updateBadges();toast('ລົບວຽກສຳເລັດ');}
+  catch(e){toast('❌ '+e.message,'e');}
 }
 
 // ===================================================================
@@ -1298,15 +1445,17 @@ function renderEmps(search='',dept=''){
     </div>`).join(''):`<div class="empty"><div class="empty-icon">👥</div>ບໍ່ພົບພະນັກງານ</div>`;
 }
 
-function saveEmp(){
+async function saveEmp(){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເພີ່ມ/ແກ້ໄຂພະນັກງານໄດ້','e');return}
   const id=document.getElementById('em-id').value;
   const n=document.getElementById('em-name').value.trim();
   if(!n){toast('ໃສ່ຊື່ກ່ອນ','e');return}
   const obj={name:n,pos:document.getElementById('em-pos').value||'-',dept:document.getElementById('em-dept').value,tel:document.getElementById('em-tel').value||'-',email:document.getElementById('em-email').value||'-',stat:document.getElementById('em-stat').value};
-  if(id){const e=S.employees.find(x=>x.id==id);if(e)Object.assign(e,obj);}
-  else{obj.id=uid();S.employees.push(obj);}
-  closeM('m-emp');renderEmps();renderDash();toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ✓');
+  try{
+    if(id){await dbUpdate('lm_employees',id,obj);const e=S.employees.find(x=>x.id==id);if(e)Object.assign(e,obj);}
+    else{const r=await dbInsert('lm_employees',obj);obj.id=r[0].id;S.employees.push(obj);}
+    closeM('m-emp');renderEmps();renderDash();toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ✓');
+  }catch(e){toast('❌ '+e.message,'e');}
 }
 
 function editEmp(id){
@@ -1322,11 +1471,11 @@ function editEmp(id){
   openM('m-emp');
 }
 
-function delEmp(id){
+async function delEmp(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ລົບໄດ້','e');return}
   if(!confirm('ລົບພະນັກງານ?'))return;
-  S.employees=S.employees.filter(x=>x.id!==id);
-  renderEmps();renderDash();toast('ລົບສຳເລັດ');
+  try{await dbDelete('lm_employees',id);S.employees=S.employees.filter(x=>x.id!==id);renderEmps();renderDash();toast('ລົບສຳເລັດ');}
+  catch(e){toast('❌ '+e.message,'e');}
 }
 
 // ===================================================================
@@ -1402,7 +1551,7 @@ function staffTakeEquip(id){
   document.getElementById('m-take-equip').classList.add('open');
 }
 
-function confirmTakeEquip(){
+async function confirmTakeEquip(){
   const id=parseInt(document.getElementById('take-eq-id').value);
   const e=S.equipment.find(x=>x.id===id);
   if(!e||!S.me){return}
@@ -1419,11 +1568,12 @@ function confirmTakeEquip(){
   e.usedNote=note;
   document.getElementById('m-take-equip').classList.remove('open');
   renderEquip();renderDash();
-  log(S.me.name+' ເອົາ "'+e.name+'" ໄປໃຊ້ — '+proj+' — '+date,'#f0b429');
+  try{await dbUpdate('lm_equipment',id,{owner:e.owner,proj:e.proj,stat:e.stat,usedDate:e.usedDate,usedNote:e.usedNote});}catch(err){}
+  dbLogActivity(S.me.name+' ເອົາ "'+e.name+'" ໄປໃຊ້ — '+proj+' — '+date,'#f0b429');
   toast('✓ "'+e.name+'" ກຳລັງໃຊ້ໂດຍ: '+S.me.name+'  📅'+date);
 }
 
-function staffReturnEquip(id){
+async function staffReturnEquip(id){
   const e=S.equipment.find(x=>x.id===id);
   if(!e)return;
   // Staff ສົ່ງຄືນໄດ້ສະເພາະຂອງຕົວເອງ
@@ -1434,19 +1584,22 @@ function staffReturnEquip(id){
   const prev=e.owner;
   e.stat='ພ້ອມໃຊ້';e.owner='—';e.proj='—';e.usedDate='';e.usedNote='';
   renderEquip();renderDash();
-  log(prev+' ສົ່ງ "'+e.name+'" ຄືນແລ້ວ','#22c55e');
+  try{await dbUpdate('lm_equipment',id,{owner:'—',proj:'—',stat:'ພ້ອມໃຊ້',usedDate:'',usedNote:''});}catch(err){}
+  dbLogActivity(prev+' ສົ່ງ "'+e.name+'" ຄືນແລ້ວ','#22c55e');
   toast('↩ ສົ່ງ "'+e.name+'" ຄືນສຳເລັດ ✓');
 }
 
-function saveEquip(){
+async function saveEquip(){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເພີ່ມ/ແກ້ໄຂອຸປະກອນໄດ້','e');return}
   const id=document.getElementById('eq-id').value;
   const n=document.getElementById('eq-name').value.trim();
   if(!n){toast('ໃສ່ຊື່ກ່ອນ','e');return}
   const obj={name:n,type:document.getElementById('eq-type').value,serial:document.getElementById('eq-serial').value||'-',owner:document.getElementById('eq-owner').value||'—',proj:document.getElementById('eq-proj').value||'—',stat:document.getElementById('eq-stat').value,note:document.getElementById('eq-note').value};
-  if(id){const e=S.equipment.find(x=>x.id==id);if(e)Object.assign(e,obj);}
-  else{obj.id=uid();S.equipment.push(obj);}
-  closeM('m-equip');renderEquip();renderDash();toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ✓');
+  try{
+    if(id){await dbUpdate('lm_equipment',id,obj);const e=S.equipment.find(x=>x.id==id);if(e)Object.assign(e,obj);}
+    else{const r=await dbInsert('lm_equipment',obj);obj.id=r[0].id;S.equipment.push(obj);}
+    closeM('m-equip');renderEquip();renderDash();toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ✓');
+  }catch(e){toast('❌ '+e.message,'e');}
 }
 
 function editEquip(id){
@@ -1463,19 +1616,20 @@ function editEquip(id){
   openM('m-equip');
 }
 
-function cycleEquip(id){
+async function cycleEquip(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເຮັດໄດ້','e');return}
   const e=S.equipment.find(x=>x.id===id);if(!e)return;
   const c=['ພ້ອມໃຊ້','ໃຊ້ຢູ່','ຊ່ອມ'];
   e.stat=c[(c.indexOf(e.stat)+1)%3];
-  renderEquip();renderDash();toast(e.name+' → '+e.stat);
+  try{await dbUpdate('lm_equipment',id,{stat:e.stat});renderEquip();renderDash();toast(e.name+' → '+e.stat);}
+  catch(err){toast('❌ '+err.message,'e');}
 }
 
-function delEquip(id){
+async function delEquip(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ລົບໄດ້','e');return}
   if(!confirm('ລົບອຸປະກອນ?'))return;
-  S.equipment=S.equipment.filter(x=>x.id!==id);
-  renderEquip();renderDash();toast('ລົບສຳເລັດ');
+  try{await dbDelete('lm_equipment',id);S.equipment=S.equipment.filter(x=>x.id!==id);renderEquip();renderDash();toast('ລົບສຳເລັດ');}
+  catch(e){toast('❌ '+e.message,'e');}
 }
 
 // ===================================================================
@@ -1504,15 +1658,17 @@ function renderSched(){
     </tr>`).join(''):`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📅</div>ບໍ່ມີຕາຕະລາງ</div></td></tr>`;
 }
 
-function saveSched(){
+async function saveSched(){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເພີ່ມ/ແກ້ໄຂຕາຕະລາງໄດ້','e');return}
   const id=document.getElementById('sc-id').value;
   const n=document.getElementById('sc-name').value.trim();
   if(!n){toast('ໃສ່ຊື່ກ່ອນ','e');return}
   const obj={name:n,proj:document.getElementById('sc-proj').value||'-',date:document.getElementById('sc-date').value||'-',time:document.getElementById('sc-time').value||'-',loc:document.getElementById('sc-loc').value||'-',team:document.getElementById('sc-team').value||'-',note:document.getElementById('sc-note').value,stat:'ກຳນົດການ'};
-  if(id){const s=S.schedules.find(x=>x.id==id);if(s)Object.assign(s,obj);}
-  else{obj.id=uid();S.schedules.push(obj);}
-  closeM('m-sched');renderSched();toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ✓');
+  try{
+    if(id){await dbUpdate('lm_schedules',id,obj);const s=S.schedules.find(x=>x.id==id);if(s)Object.assign(s,obj);}
+    else{const r=await dbInsert('lm_schedules',obj);obj.id=r[0].id;S.schedules.push(obj);}
+    closeM('m-sched');renderSched();toast((id?'ແກ້ໄຂ':'ເພີ່ມ')+' "'+n+'" ✓');
+  }catch(e){toast('❌ '+e.message,'e');}
 }
 
 function editSched(id){
@@ -1529,15 +1685,16 @@ function editSched(id){
   openM('m-sched');
 }
 
-function doneSched(id){
+async function doneSched(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ເຮັດໄດ້','e');return}
   const s=S.schedules.find(x=>x.id===id);
-  if(s){s.stat='ສຳເລັດ';renderSched();toast('ທຳເຄື່ອງໝາຍສຳເລັດ ✓')}
+  if(s){s.stat='ສຳເລັດ';renderSched();try{await dbUpdate('lm_schedules',id,{stat:'ສຳເລັດ'});}catch(e){}toast('ທຳເຄື່ອງໝາຍສຳເລັດ ✓')}
 }
-function delSched(id){
+async function delSched(id){
   if(S.me&&S.me.role!=='admin'){toast('⛔ ພຽງ Admin ລົບໄດ້','e');return}
   if(!confirm('ລົບ?'))return;
-  S.schedules=S.schedules.filter(x=>x.id!==id);renderSched();toast('ລົບສຳເລັດ');
+  try{await dbDelete('lm_schedules',id);S.schedules=S.schedules.filter(x=>x.id!==id);renderSched();toast('ລົບສຳເລັດ');}
+  catch(e){toast('❌ '+e.message,'e');}
 }
 
 // ===================================================================
@@ -1736,7 +1893,8 @@ function openRVDetail(id){
   openM('m-rv-detail');
 }
 
-function submitComment(){
+
+async function submitComment(){
   const r=S.reviews.find(x=>x.id===curRV);if(!r)return;
   const txt=document.getElementById('rvd-cmt-txt').value.trim();
   if(!txt){toast('ໃສ່ຄຳເຫັນກ່ອນ','e');return}
@@ -1745,39 +1903,41 @@ function submitComment(){
   r.comments.push({id:uid(),author:user.name,av:user.name.charAt(0),col:'#f0b429',type,text:txt,time:now()});
   if(type==='revision'||type==='reject')r.stat='reviewing';
   document.getElementById('rvd-cmt-txt').value='';
-  log(user.name+' Comment ໃນ "'+r.title+'"','#3b82f6');
+  try{await dbUpdate('lm_reviews',r.id,{comments:r.comments,stat:r.stat});}catch(e){}
+  dbLogActivity(user.name+' Comment ໃນ "'+r.title+'"','#3b82f6');
   openRVDetail(curRV);toast('ສົ່ງ Comment ✓');
 }
 
-function approveRV(id){
+async function approveRV(id){
   const r=S.reviews.find(x=>x.id===id);if(!r)return;
   r.stat='approved';
   const user=S.me||{name:'Admin'};
   r.comments.push({id:uid(),author:user.name,av:user.name.charAt(0),col:'#22c55e',type:'approve',text:'✅ ອະນຸມັດ '+r.ver+' — ພ້ອມ Finalize',time:now()});
   r.versions[r.versions.length-1].stat='approved';
-  log('ອະນຸມັດ "'+r.title+'"','#22c55e');
+  try{await dbUpdate('lm_reviews',r.id,{stat:'approved',comments:r.comments,versions:r.versions});}catch(e){}
+  dbLogActivity('ອະນຸມັດ "'+r.title+'"','#22c55e');
   closeM('m-rv-detail');renderReview();toast('✅ Approved "'+r.title+'" ສຳເລັດ!');
 }
 
 function rejectRV(id){
   const r=S.reviews.find(x=>x.id===id);if(!r)return;
-  r.stat='reviewing';
-  r.versions[r.versions.length-1].stat='rejected';
+  r.stat='reviewing';r.versions[r.versions.length-1].stat='rejected';
   document.getElementById('rvd-cmt-type').value='revision';
   toast('ໝາຍເປັນ "ຂໍແກ້ໄຂ" — ໃສ່ Comment ລາຍລະອຽດ','i');
 }
 
-function addVersion(id){
+async function addVersion(id){
   const r=S.reviews.find(x=>x.id===id);if(!r)return;
   const vn=r.versions.length+1;
   const label=vn>=4?'Final':'Draft '+vn;
   r.versions.push({label,stat:'draft',date:today()});
   r.stat='draft';r.ver=label;
-  log('ເພີ່ມ '+label+' ໃນ "'+r.title+'"');
+  try{await dbUpdate('lm_reviews',r.id,{versions:r.versions,stat:'draft',ver:label});}catch(e){}
+  dbLogActivity('ເພີ່ມ '+label+' ໃນ "'+r.title+'"');
   openRVDetail(id);toast('ເພີ່ມ '+label+' ✓');
 }
 
-function promoteToFinal(id){
+async function promoteToFinal(id){
   const r=S.reviews.find(x=>x.id===id);if(!r)return;
   if(r.stat!=='approved'&&!confirm('ຍັງບໍ່ Approve — ສ້າງ Final ຕ່ອງ?'))return;
   r.stat='final';r.ver='Final';
@@ -1785,11 +1945,11 @@ function promoteToFinal(id){
   r.deliveredAt=today();r.dlCount=0;
   if(!r.versions.find(v=>v.label==='Final'))r.versions.push({label:'Final',stat:'final',date:r.deliveredAt});
   else r.versions[r.versions.length-1].stat='final';
-  log('📦 Final Delivery: "'+r.title+'" — ລູກຄ້າດາວໂຫລດໄດ້','#a855f7');
+  try{await dbUpdate('lm_reviews',r.id,{stat:'final',ver:'Final',link:r.link,deliveredAt:r.deliveredAt,versions:r.versions});}catch(e){}
+  dbLogActivity('📦 Final Delivery: "'+r.title+'"','#a855f7');
   renderReview();toast('📦 Final ສຳເລັດ! ລູກຄ້າດາວໂຫລດໄດ້ ✓');
 }
 
-// Upload draft
 function previewFile(input){
   if(!input.files[0])return;
   const f=input.files[0];
@@ -1800,16 +1960,19 @@ function previewFile(input){
   document.getElementById('up-fsize').textContent=(f.size/1024/1024).toFixed(1)+' MB';
 }
 
-function submitDraft(){
+async function submitDraft(){
   const title=document.getElementById('up-title').value.trim();
   if(!title){toast('ໃສ່ຊື່ Draft ກ່ອນ','e');return}
   const type=document.getElementById('up-type').value;
   const ext={video:'mp4',photo:'zip',doc:'pdf'}[type]||'mp4';
-  const r={id:uid(),title,proj:document.getElementById('up-proj').value||'-',type,stat:'draft',ver:document.getElementById('up-ver').value,fname:title.replace(/\s/g,'_')+'.'+ext,fsize:rnd(100,1900)+' MB',by:S.me?S.me.name:'Staff',reviewer:document.getElementById('up-reviewer').value||'-',at:today(),note:document.getElementById('up-note').value||'-',versions:[{label:document.getElementById('up-ver').value,stat:'draft',date:today()}],comments:[]};
-  S.reviews.push(r);
-  log('ອັບໂຫຼດ Draft: "'+title+'"','#06b6d4');
-  closeM('m-upload');renderReview();toast('ອັບໂຫຼດ "'+title+'" ສຳເລັດ ✓');
-  ['up-title','up-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  const r={title,proj:document.getElementById('up-proj').value||'-',type,stat:'draft',ver:document.getElementById('up-ver').value,fname:title.replace(/\s/g,'_')+'.'+ext,fsize:rnd(100,1900)+' MB',by:S.me?S.me.name:'Staff',reviewer:document.getElementById('up-reviewer').value||'-',at:today(),note:document.getElementById('up-note').value||'-',versions:[{label:document.getElementById('up-ver').value,stat:'draft',date:today()}],comments:[]};
+  try{
+    const res=await dbInsert('lm_reviews',r);
+    r.id=res[0].id;S.reviews.unshift(r);
+    dbLogActivity('ອັບໂຫຼດ Draft: "'+title+'"','#06b6d4');
+    closeM('m-upload');renderReview();toast('ອັບໂຫຼດ "'+title+'" ສຳເລັດ ✓');
+    ['up-title','up-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  }catch(e){toast('❌ '+e.message,'e');}
 }
 
 // Client link
@@ -1890,15 +2053,21 @@ function renderAdmin(){
     <td><span class="badge bg-green">${u.status}</span></td></tr>`).join('');
 }
 
-function saveUser(){
+async function saveUser(){
   const n=document.getElementById('us-name').value.trim();
   const u=document.getElementById('us-uname').value.trim();
   const p=document.getElementById('us-pass').value;
+  const role=document.getElementById('us-role').value;
   if(!n||!u||!p){toast('ໃສ່ຂໍ້ມູນໃຫ້ຄົບ','e');return}
   if(S.users.find(x=>x.uname===u)){toast('Username ນີ້ຖືກໃຊ້ແລ້ວ','e');return}
-  S.users.push({id:uid(),name:n,uname:u,pass:p,role:document.getElementById('us-role').value,status:'Active'});
-  closeM('m-user');renderAdmin();toast('ເພີ່ມຜູ້ໃຊ້ "'+n+'" ✓');
-  ['us-name','us-uname','us-pass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  const obj={name:n,uname:u,pass:p,role,status:'Active'};
+  try{
+    const r=await dbUpsertUser(obj);
+    if(r&&r[0]){obj.id=r[0].id;}else{obj.id=uid();}
+    S.users.push(obj);
+    closeM('m-user');renderAdmin();toast('ເພີ່ມຜູ້ໃຊ້ "'+n+'" ✓');
+    ['us-name','us-uname','us-pass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  }catch(e){toast('❌ '+e.message,'e');}
 }
 
 // ===================================================================
@@ -1936,8 +2105,7 @@ function fillSelect(id,opts,val){
 
 // Mark edit
 function markEdit(modalId){const m=document.getElementById(modalId);if(m){const h=m.querySelector('input[type=hidden]');if(h)h._editSet=true;}}
-const origEditProject=editProject;
-function editProject(id){const m=document.getElementById('m-proj');if(m){const h=m.querySelector('input[type=hidden]');if(h)h._editSet=true;}origEditProject(id);}
+
 
 // ================================================================
 // PHOTO SELECTION FUNCTIONS
@@ -1995,7 +2163,7 @@ function openProfile(){
   document.getElementById('pf-msg').textContent='';
   openM('m-profile');
 }
-function saveProfile(){
+async function saveProfile(){
   if(!S.me)return;
   const name=document.getElementById('pf-name').value.trim();
   const pass=document.getElementById('pf-pass').value;
@@ -2018,6 +2186,7 @@ function saveProfile(){
   setTimeout(()=>closeM('m-profile'),800);
   toast('ອັບເດດ Profile "'+name+'" ✓');
   if(document.getElementById('sec-admin').classList.contains('active'))renderAdmin();
+  
 }
 
 // ===================================================================
