@@ -50,13 +50,32 @@ app.post('/upload-r2', upload.single('file'), async (req, res) => {
   }
 });
 
-// Health check
+// Health check + credential debug
 app.get('/health', (req, res) => {
+  const key = process.env.R2_ACCESS_KEY_ID||'';
+  const secret = process.env.R2_SECRET_ACCESS_KEY||'';
+  const account = process.env.R2_ACCOUNT_ID||'';
   res.json({
     ok: true,
-    r2: !!(process.env.R2_ACCESS_KEY_ID && process.env.R2_ACCOUNT_ID),
+    r2: !!(key && account),
     bucket: BUCKET,
+    // Show partial keys for debugging (safe — not full secret)
+    key_prefix: key.slice(0,8)+'...',
+    key_len: key.length,
+    secret_len: secret.length,
+    account_prefix: account.slice(0,8)+'...',
   });
+});
+
+// Test R2 connection
+app.get('/test-r2', async (req, res) => {
+  try {
+    const { ListBucketsCommand } = require('@aws-sdk/client-s3');
+    const result = await r2.send(new ListBucketsCommand({}));
+    res.json({ ok: true, buckets: result.Buckets?.map(b=>b.Name) });
+  } catch(e) {
+    res.status(500).json({ ok: false, error: e.message, code: e.Code });
+  }
 });
 
 app.get('*', (req, res) => {
