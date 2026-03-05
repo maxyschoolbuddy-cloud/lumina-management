@@ -350,6 +350,10 @@ tbody tr:last-child td{border-bottom:none}
 .cl-cmt-area:focus{border-color:var(--gold)}
 .cl-action-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
 
+/* ROLE-BASED NAV — hidden by CSS, revealed by JS after login */
+.nav-admin-only { display: none; }
+.nav-staff-only { display: none; }
+
 /* TOAST */
 .toast{position:fixed;bottom:22px;right:22px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--green);padding:12px 16px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:13px;transform:translateX(130%);transition:transform .3s ease;min-width:260px;max-width:380px}
 .toast.show{transform:translateX(0)}
@@ -414,22 +418,22 @@ tbody tr:last-child td{border-bottom:none}
 
   <div class="nav-sec">
     <div class="nav-sec-title">ຫຼັກ</div>
-    <div class="nav-item active" data-sec="dashboard" onclick="goTo('dashboard')"><span class="nav-icon">📊</span>Dashboard</div>
-    <div class="nav-item" data-sec="projects" onclick="goTo('projects')"><span class="nav-icon">🎬</span>ໂປຣເຈັກ<span class="nav-badge" id="nb-proj">0</span></div>
-    <div class="nav-item" data-sec="tasks" onclick="goTo('tasks')"><span class="nav-icon">✅</span>ຕິດຕາມວຽກ<span class="nav-badge blue" id="nb-task">0</span></div>
-    <div class="nav-item" data-sec="review" onclick="goTo('review')"><span class="nav-icon">🎞️</span>ກວດວຽກ<span class="nav-badge" id="nb-review">0</span></div>
-    <div class="nav-item" data-sec="delivery" onclick="goTo('delivery')"><span class="nav-icon">📦</span>Final Delivery<span class="nav-badge green" id="nb-delivery">0</span></div>
+    <div class="nav-item active" data-sec="dashboard" data-role="all" onclick="goTo('dashboard')"><span class="nav-icon">📊</span>Dashboard</div>
+    <div class="nav-item" data-sec="projects" data-role="admin" onclick="goTo('projects')"><span class="nav-icon">🎬</span>ໂປຣເຈັກ<span class="nav-badge" id="nb-proj">0</span></div>
+    <div class="nav-item" data-sec="tasks" data-role="all" onclick="goTo('tasks')"><span class="nav-icon">✅</span>ວຽກຂອງຂ້ອຍ<span class="nav-badge blue" id="nb-task">0</span></div>
+    <div class="nav-item" data-sec="review" data-role="all" onclick="goTo('review')"><span class="nav-icon">🎞️</span>ກວດ Draft<span class="nav-badge" id="nb-review">0</span></div>
+    <div class="nav-item" data-sec="delivery" data-role="admin" onclick="goTo('delivery')"><span class="nav-icon">📦</span>Final Delivery<span class="nav-badge green" id="nb-delivery">0</span></div>
   </div>
   <div class="nav-sec">
     <div class="nav-sec-title">ຈັດການ</div>
-    <div class="nav-item" data-sec="employees" onclick="goTo('employees')"><span class="nav-icon">👥</span>ພະນັກງານ</div>
-    <div class="nav-item" data-sec="equipment" onclick="goTo('equipment')"><span class="nav-icon">📷</span>ອຸປະກອນ</div>
-    <div class="nav-item" data-sec="schedule" onclick="goTo('schedule')"><span class="nav-icon">📅</span>ຕາຕະລາງ</div>
+    <div class="nav-item" data-sec="employees" data-role="admin" onclick="goTo('employees')"><span class="nav-icon">👥</span>ພະນັກງານ</div>
+    <div class="nav-item" data-sec="equipment" data-role="all" onclick="goTo('equipment')"><span class="nav-icon">📷</span>ອຸປະກອນ</div>
+    <div class="nav-item" data-sec="schedule" data-role="all" onclick="goTo('schedule')"><span class="nav-icon">📅</span>ຕາຕະລາງ</div>
   </div>
   <div class="nav-sec" id="adminNav">
     <div class="nav-sec-title">Admin</div>
-    <div class="nav-item" data-sec="reports" onclick="goTo('reports')"><span class="nav-icon">📈</span>ລາຍງານ</div>
-    <div class="nav-item" data-sec="admin" onclick="goTo('admin')"><span class="nav-icon">⚙️</span>ຕັ້ງຄ່າ</div>
+    <div class="nav-item" data-sec="reports" data-role="admin" onclick="goTo('reports')"><span class="nav-icon">📈</span>ລາຍງານ</div>
+    <div class="nav-item" data-sec="admin" data-role="admin" onclick="goTo('admin')"><span class="nav-icon">⚙️</span>ຕັ້ງຄ່າ</div>
   </div>
   <div class="sb-bottom">
     <div class="nav-item" onclick="doLogout()" style="color:var(--red)"><span class="nav-icon">🚪</span>ອອກຈາກລະບົບ</div>
@@ -821,7 +825,8 @@ tbody tr:last-child td{border-bottom:none}
           <input type="file" id="up-file-input" onchange="previewFile(this)" accept="video/*,image/*,.pdf,.zip" style="display:none">
           <div class="file-drop-icon" id="up-icon">📁</div>
           <div class="file-drop-name" id="up-fname">ຄລິກເພື່ອເລືອກໄຟລ໌</div>
-          <div class="file-drop-sub" id="up-fsize">MP4, MOV, JPG, PNG, PDF, ZIP — ສູງສຸດ 500MB</div>
+          <div class="file-drop-sub" id="up-fsize" style="display:none"></div>
+        <div id="up-storage-hint" style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px"></div>
         </div>
         <div id="up-progress" style="display:none;margin-top:8px">
           <div style="background:var(--bg3);height:6px;border-radius:3px;overflow:hidden">
@@ -1047,6 +1052,11 @@ const SB_URL = 'https://abnbljsvqyoafgxwypan.supabase.co';
 const SB_KEY = 'sb_publishable_HRgI6hJhwIXq90xxBGsREQ_gMADokj-';
 const SB_BUCKET = 'lumina-drafts';
 
+// ── Cloudflare R2 Config ──
+// ຕັ້ງ R2_WORKER_URL ຫຼັງຈາກ deploy Cloudflare Worker
+// ຖ້າຍັງ = '' ຈະ fallback ໃຊ້ Supabase Storage (<45MB)
+const R2_WORKER_URL = 'https://vangjut-upload.maxyschoolbuddy.workers.dev';
+
 // Check if we're on a client review page (?client=PROJECT_TOKEN)
 const URL_PARAMS = new URLSearchParams(window.location.search);
 const CLIENT_TOKEN = URL_PARAMS.get('client');
@@ -1247,6 +1257,11 @@ function doLogout(){
 // NAV
 // ===================================================================
 function goTo(name){
+  // Block unauthorized pages for staff
+  if(S.me && !canGoTo(name)){
+    toast('⛔ ບໍ່ມີສິດເຂົ້າໜ້ານີ້','e');
+    return;
+  }
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const sec=document.getElementById('sec-'+name);
@@ -1266,16 +1281,55 @@ function goTo(name){
 async function initApp(){
   setInterval(()=>{document.getElementById('clk').textContent=new Date().toLocaleTimeString('lo-LA')},1000);
   await loadAllData();
+  applyNavPermissions();
   goTo('dashboard');
+}
+
+// Apply menu visibility based on role
+function applyNavPermissions(){
+  const isAdmin = S.me && S.me.role === 'admin';
+  // Show/hide nav items by data-role
+  document.querySelectorAll('.nav-item[data-role]').forEach(el=>{
+    const role = el.getAttribute('data-role');
+    if(role === 'admin'){
+      el.style.display = isAdmin ? '' : 'none';
+    } else {
+      el.style.display = ''; // 'all' = everyone sees it
+    }
+  });
+  // Hide entire admin nav section if staff
+  const adminNav = document.getElementById('adminNav');
+  if(adminNav) adminNav.style.display = isAdmin ? '' : 'none';
+  // Update role badge + label in sidebar
+  const roleBadge = document.getElementById('sbBadge');
+  const roleLabel = document.getElementById('sbRole');
+  if(roleBadge) roleBadge.textContent = isAdmin ? 'ADMIN' : 'STAFF';
+  if(roleBadge) roleBadge.style.background = isAdmin ? 'rgba(240,180,41,.2)' : 'rgba(59,130,246,.2)';
+  if(roleBadge) roleBadge.style.color = isAdmin ? 'var(--gold)' : 'var(--blue)';
+  if(roleLabel) roleLabel.textContent = isAdmin ? 'ຜູ້ດູແລລະບົບ' : 'ພະນັກງານ';
+}
+
+// Protect goTo from unauthorized access
+const STAFF_ALLOWED_PAGES = ['dashboard','tasks','review','equipment','schedule'];
+function canGoTo(name){
+  if(!S.me) return false;
+  if(S.me.role === 'admin') return true;
+  return STAFF_ALLOWED_PAGES.includes(name);
 }
 
 // ===================================================================
 // DASHBOARD
 // ===================================================================
 function renderDash(){
+  const isAdmin=S.me&&S.me.role==='admin';
+  const myName=S.me?S.me.name:'';
   const active=S.projects.filter(p=>p.stat==='ກຳລັງດຳເນີນ').length;
-  const done=S.tasks.filter(t=>t.stat==='done').length;
-  const pending=S.reviews.filter(r=>r.stat==='draft'||r.stat==='reviewing').length;
+  // For staff: count only their own tasks/reviews
+  const myTasks=S.tasks.filter(t=>t.assign===myName);
+  const done=isAdmin?S.tasks.filter(t=>t.stat==='done').length:myTasks.filter(t=>t.stat==='done').length;
+  const pending=isAdmin
+    ?S.reviews.filter(r=>r.stat==='draft'||r.stat==='reviewing').length
+    :S.reviews.filter(r=>(r.stat==='draft'||r.stat==='reviewing')&&(r.by===myName||r.reviewer===myName)).length;
   document.getElementById('ds-proj').textContent=S.projects.length;
   document.getElementById('ds-proj-s').textContent='● '+active+' ກຳລັງດຳເນີນ';
   document.getElementById('ds-emp').textContent=S.employees.length;
@@ -2149,18 +2203,40 @@ function previewFile(input){
   _upFile=input.files[0];
   const f=_upFile;
   const ext=f.name.split('.').pop().toLowerCase();
-  const ic=['mp4','mov','avi','mkv'].includes(ext)?'🎬':['jpg','jpeg','png','zip'].includes(ext)?'📸':'📄';
+  const ic=['mp4','mov','avi','mkv'].includes(ext)?'🎬':['jpg','jpeg','png','gif','webp'].includes(ext)?'📸':'📄';
   const mb=(f.size/1024/1024).toFixed(1);
   document.getElementById('up-icon').textContent=ic;
   document.getElementById('up-fname').textContent=f.name;
-  document.getElementById('up-fsize').textContent=mb+' MB';
-  // Warn if file > 45MB
-  if(f.size>45*1024*1024){
-    document.getElementById('up-fsize').style.color='var(--red)';
-    document.getElementById('up-fsize').innerHTML=`${mb} MB ⚠ ໃຫຍ່ເກີນ 45MB — <a href="javascript:setUploadTab('link')" style="color:var(--gold);text-decoration:underline">ໃຊ້ Link ແທນ</a>`;
+  const sizeEl=document.getElementById('up-fsize');
+  const hintEl=document.getElementById('up-storage-hint');
+  sizeEl.style.display='';
+  if(R2_WORKER_URL){
+    // R2 configured — unlimited
+    sizeEl.style.color='var(--green)';
+    sizeEl.textContent=mb+' MB ✓ (Cloudflare R2)';
+    if(hintEl) hintEl.textContent='';
+  } else if(f.size > 45*1024*1024){
+    // Supabase but too large
+    sizeEl.style.color='var(--red)';
+    sizeEl.textContent=mb+' MB ⚠ ໃຫຍ່ເກີນ 45MB';
+    if(hintEl){
+      hintEl.innerHTML=`<span style="color:var(--orange)">ຍັງບໍ່ຮອງຮັບ upload ໃຫຍ່ — </span><button onclick="setUploadTab('link')" style="background:none;border:none;color:var(--gold);cursor:pointer;text-decoration:underline;font-size:11px;padding:0">ໃຊ້ Link Google Drive ແທນ</button>`;
+    }
   } else {
-    document.getElementById('up-fsize').style.color='';
-    document.getElementById('up-fsize').textContent=mb+' MB ✓';
+    sizeEl.style.color='var(--text3)';
+    sizeEl.textContent=mb+' MB ✓';
+    if(hintEl) hintEl.textContent='';
+  }
+}
+
+// Show storage mode info when modal opens
+function showStorageMode(){
+  const hintEl=document.getElementById('up-storage-hint');
+  if(!hintEl)return;
+  if(R2_WORKER_URL){
+    hintEl.innerHTML='<span style="color:var(--green)">☁ Cloudflare R2 — Upload ບໍ່ຈຳກັດຂະໜາດ</span>';
+  } else {
+    hintEl.innerHTML='<span style="color:var(--text3)">ℹ Storage: Supabase (ສູງສຸດ 45MB) — ສຳລັບ video ໃຫຍ່ ໃຊ້ Link</span>';
   }
 }
 
@@ -2217,54 +2293,93 @@ async function submitDraft(){
   }
 }
 
+// ── Universal upload: R2 (unlimited) or Supabase (<45MB) ──
 async function uploadWithProgress(file, reviewId){
-  return new Promise(async(resolve,reject)=>{
-    const ext=file.name.split('.').pop().toLowerCase();
-    const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-    const path=`${reviewId}/${Date.now()}_${safeName}`;
-    const MB = file.size/1024/1024;
+  if(R2_WORKER_URL){
+    return uploadToR2(file, reviewId);
+  } else {
+    return uploadToSupabase(file, reviewId);
+  }
+}
 
-    // Supabase free tier hard limit ~50MB per upload
-    if(MB > 45){
-      reject(new Error(`ໄຟລ໌ ${MB.toFixed(1)}MB ໃຫຍ່ເກີນ 45MB ສຳລັບ upload ໂດຍກົງ\n\nວິທີແກ້: ໃຊ້ Tab "🔗 ໃສ່ Link" ແທນ\n\nຂັ້ນຕອນ:\n1. Upload ຂຶ້ນ Google Drive\n2. ກົດ Share → "Anyone with link"\n3. Copy link ວາງໃສ່ field Link`));
-      return;
-    }
-
-    const xhr=new XMLHttpRequest();
-    xhr.open('POST',`${SB_URL}/storage/v1/object/${SB_BUCKET}/${path}`);
-    xhr.setRequestHeader('apikey',SB_KEY);
-    xhr.setRequestHeader('Authorization','Bearer '+SB_KEY);
-    xhr.setRequestHeader('Content-Type',file.type||'application/octet-stream');
-    xhr.setRequestHeader('x-upsert','true');
-
-    // Timeout: 3 mins for large files
-    xhr.timeout = 180000;
-
-    xhr.upload.onprogress=e=>{
+// Upload via Cloudflare R2 Worker — ບໍ່ຈຳກັດຂະໜາດ
+async function uploadToR2(file, reviewId){
+  return new Promise((resolve,reject)=>{
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+    const path = `${reviewId}/${Date.now()}_${safeName}`;
+    const uploadUrl = `${R2_WORKER_URL}/upload/${path}`;
+    const startTime = Date.now();
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', uploadUrl);
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+    xhr.timeout = 0; // No timeout for large files
+    xhr.upload.onprogress = e=>{
       if(e.lengthComputable){
-        const pct=Math.round(e.loaded/e.total*100);
-        const speed=e.loaded/(Date.now()-startTime+1)*1000/1024/1024;
-        document.getElementById('up-prog-bar').style.width=pct+'%';
-        document.getElementById('up-prog-txt').textContent=`ກຳລັງອັບໂຫຼດ ${pct}% — ${speed.toFixed(1)} MB/s`;
+        const pct = Math.round(e.loaded/e.total*100);
+        const elapsed = (Date.now()-startTime)/1000;
+        const speed = e.loaded/elapsed/1024/1024;
+        const remaining = elapsed/pct*(100-pct);
+        const remStr = remaining>60?Math.round(remaining/60)+'ນາທີ':Math.round(remaining)+'ວິ';
+        setUploadProgress(pct, `${pct}% — ${speed.toFixed(1)} MB/s — ເຫຼືອ ~${remStr}`);
       }
     };
-    const startTime=Date.now();
-    xhr.onload=()=>{
+    xhr.onload = ()=>{
+      if(xhr.status===200){
+        const publicUrl = `${R2_WORKER_URL}/file/${path}`;
+        resolve(publicUrl);
+      } else {
+        reject(new Error('R2 Upload failed ('+xhr.status+'): '+xhr.responseText));
+      }
+    };
+    xhr.onerror = ()=>reject(new Error('ເຊື່ອມຕໍ່ຜິດພາດ'));
+    xhr.send(file);
+  });
+}
+
+// Upload via Supabase Storage — ຈຳກັດ <45MB (free tier)
+async function uploadToSupabase(file, reviewId){
+  const MB = file.size/1024/1024;
+  if(MB > 45){
+    throw new Error(`ໄຟລ໌ ${MB.toFixed(1)}MB ໃຫຍ່ເກີນ 45MB\nຍັງບໍ່ໄດ້ setup Cloudflare R2\nກະລຸນາໃຊ້ Tab "🔗 ໃສ່ Link" ແທນ (Google Drive / YouTube)`);
+  }
+  return new Promise((resolve,reject)=>{
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+    const path = `${reviewId}/${Date.now()}_${safeName}`;
+    const startTime = Date.now();
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${SB_URL}/storage/v1/object/${SB_BUCKET}/${path}`);
+    xhr.setRequestHeader('apikey', SB_KEY);
+    xhr.setRequestHeader('Authorization', 'Bearer '+SB_KEY);
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+    xhr.setRequestHeader('x-upsert', 'true');
+    xhr.timeout = 180000;
+    xhr.upload.onprogress = e=>{
+      if(e.lengthComputable){
+        const pct = Math.round(e.loaded/e.total*100);
+        const speed = e.loaded/(Date.now()-startTime+1)*1000/1024/1024;
+        setUploadProgress(pct, `${pct}% — ${speed.toFixed(1)} MB/s`);
+      }
+    };
+    xhr.onload = ()=>{
       if(xhr.status<300){
         resolve(`${SB_URL}/storage/v1/object/public/${SB_BUCKET}/${path}`);
       } else {
         let msg='Upload failed ('+xhr.status+')';
         try{const j=JSON.parse(xhr.responseText);msg=j.message||j.error||msg;}catch(e){}
-        if(xhr.status===413||msg.includes('size')||msg.includes('limit')){
-          msg='ໄຟລ໌ໃຫຍ່ເກີນຂອບເຂດ — ໃຊ້ Google Drive Link ແທນ';
-        }
         reject(new Error(msg));
       }
     };
-    xhr.ontimeout=()=>reject(new Error('ໃຊ້ເວລາດົນເກີນ — ລອງ Google Drive Link ແທນ'));
-    xhr.onerror=()=>reject(new Error('ເຊື່ອມຕໍ່ຜິດພາດ — ລອງ Google Drive Link ແທນ'));
+    xhr.ontimeout = ()=>reject(new Error('Timeout — ລອງ Link ແທນ'));
+    xhr.onerror = ()=>reject(new Error('ເຊື່ອມຕໍ່ຜິດພາດ'));
     xhr.send(file);
   });
+}
+
+function setUploadProgress(pct, txt){
+  const bar = document.getElementById('up-prog-bar');
+  const label = document.getElementById('up-prog-txt');
+  if(bar) bar.style.width = pct+'%';
+  if(label) label.textContent = 'ກຳລັງອັບໂຫຼດ '+txt;
 }
 
 // Client link
@@ -2488,6 +2603,14 @@ function openM(id){
     if(submitBtn){ submitBtn.style.display=''; submitBtn.textContent='💾 ສ້າງ Account'; }
     const unEl=document.getElementById('us-uname');
     if(unEl&&!unEl.value) unEl.dataset.manual='false';
+  }
+  if(id==='m-upload'){
+    _upFile=null;
+    showStorageMode();
+    setUploadTab('file');
+    document.getElementById('up-fname').textContent='ຄລິກເພື່ອເລືອກໄຟລ໌';
+    document.getElementById('up-icon').textContent='📁';
+    document.getElementById('up-progress').style.display='none';
   }
   // Populate dropdowns
   const projOpts='<option value="">— ເລືອກ —</option>'+S.projects.map(p=>`<option>${esc(p.name)}</option>`).join('');
