@@ -20,22 +20,31 @@ const r2 = new S3Client({
 const BUCKET = process.env.R2_BUCKET_NAME || 'vangjut-drafts';
 const WORKER_URL = process.env.R2_WORKER_URL || '';
 
-// multer: store in memory (streams to R2)
+// ✅ FIX: ໃຊ້ diskStorage ແທນ memoryStorage — ບໍ່ crash RAM ສຳລັບ video ໃຫຍ່
 const upload = multer({
-  storage: multer.memoryStorage(),
+  storage: multer.diskStorage({
+    destination: '/tmp',
+    filename: (req, file, cb) => cb(null, `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g,'_')}`),
+  }),
   limits: { fileSize: 2 * 1024 * 1024 * 1024 }, // 2GB max
 });
 
 // ── POST /upload-r2 — browser uploads to Railway, Railway streams to R2 ──
 app.post('/upload-r2', upload.single('file'), async (req, res) => {
+  const fs = require('fs');
+  let tmpPath = null;
   try {
     if (!req.file) return res.status(400).json({ error: 'No file' });
+    tmpPath = req.file.path;
     const filePath = req.body.path || `uploads/${Date.now()}_${req.file.originalname}`;
 
+    // ✅ FIX: stream ໂດຍກົງຈາກ disk → R2, ບໍ່ load ທັງໝົດໃສ່ RAM
+    const fileStream = fs.createReadStream(tmpPath);
     await r2.send(new PutObjectCommand({
       Bucket: BUCKET,
       Key: filePath,
-      Body: req.file.buffer,
+      Body: fileStream,
+      ContentLength: req.file.size,
       ContentType: req.file.mimetype || 'application/octet-stream',
     }));
 
@@ -47,6 +56,9 @@ app.post('/upload-r2', upload.single('file'), async (req, res) => {
   } catch (e) {
     console.error('upload-r2 error:', e);
     res.status(500).json({ error: e.message });
+  } finally {
+    // ✅ ລຶບໄຟລ໌ temp ຫຼັງ upload ສຳເລັດ
+    if (tmpPath) fs.unlink(tmpPath, () => {});
   }
 });
 
